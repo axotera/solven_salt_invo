@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Shared SOLVEN A4 document (7 sections), ported from the approved
+        solven-invoice.tsx / solven-invoice.css prototype.
+        Expects: doc, solven_title, solven_no_label, solven_no, solven_date_label,
+                 solven_date, solven_shipment, solven_payment (lists of (label, value)).
+        Uses tables + absolute positioning only (wkhtmltopdf has no reliable flex/grid).
+    -->
+    <!-- Compact label/value grid shared by all four documents.
+         Expects grid_pairs [(label, value)]; value False = required but missing. -->
+    <template id="solven_ship_grid">
+        <table class="sv-ship">
+            <colgroup><col/><col/><col/></colgroup>
+            <tr t-foreach="doc._solven_rows(grid_pairs, 3)" t-as="row">
+                <td t-foreach="row" t-as="p">
+                    <span class="l" t-out="p[0]"/>
+                    <span t-if="p[1]" class="v" t-out="p[1]"/>
+                    <span t-else="" class="v sv-missing">MISSING</span>
+                </td>
+                <td t-foreach="range(3 - len(row))" t-as="_pad"/>
+            </tr>
+        </table>
+    </template>
+
+    <template id="solven_document">
+        <t t-set="company" t-value="doc.company_id"/>
+        <t t-set="partner" t-value="doc.partner_id"/>
+        <t t-set="currency" t-value="doc.currency_id"/>
+        <t t-set="ship_pairs" t-value="doc._solven_pairs(solven_shipment)"/>
+        <t t-set="pay_pairs" t-value="doc._solven_pairs(solven_payment)"/>
+        <t t-set="lines" t-value="doc._solven_lines()"/>
+        <t t-set="bank" t-value="doc._solven_bank_accounts()"/>
+        <t t-set="terms" t-value="doc._solven_terms()"/>
+        <div class="article solven" t-att-data-oe-model="doc._name" t-att-data-oe-id="doc.id">
+        <div class="sv-page">
+        <table class="sv-frame">
+            <colgroup>
+                <col style="width:100mm"/><col style="width:30mm"/><col style="width:30mm"/><col style="width:40mm"/>
+            </colgroup>
+            <tbody>
+            <!-- 1. Header -->
+            <tr>
+                <td colspan="4" class="sv-header">
+                    <img class="sv-logo" src="/solven_export_invoice/static/img/logo03.svg" alt="SOLVEN"/>
+                    <img class="sv-tri" src="/solven_export_invoice/static/img/tri03.svg" alt=""/>
+                    <div class="sv-title" t-out="solven_title"/>
+                    <table class="sv-meta">
+                        <tr><td class="k" t-out="solven_no_label"/><td class="v" t-out="solven_no"/></tr>
+                        <tr t-if="doc.solven_doc_version"><td class="k">Version</td><td class="v" t-out="doc.solven_doc_version"/></tr>
+                        <tr t-if="solven_date"><td class="k" t-out="solven_date_label"/><td class="v sm" t-out="solven_date"/></tr>
+                        <tr t-if="partner.commercial_partner_id.ref"><td class="k">Customer Code</td><td class="v" t-out="partner.commercial_partner_id.ref"/></tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- 2. From / To -->
+            <tr class="sv-strip"><td>FROM</td><td colspan="3">TO</td></tr>
+            <tr>
+                <td class="sv-under sv-party sv-h30">
+                    <b t-out="company.partner_id.name"/>
+                    <p t-foreach="doc._solven_address_lines(company.partner_id)" t-as="al" t-out="al"/>
+                    <p t-if="company.vat">Tax ID: <t t-out="company.vat"/></p>
+                    <p t-if="company.email" t-out="company.email"/>
+                </td>
+                <td colspan="3" class="sv-under sv-party sv-h30">
+                    <b t-out="partner.commercial_partner_id.name"/>
+                    <p t-foreach="doc._solven_address_lines(partner.commercial_partner_id if not (partner.street or partner.city) else partner)" t-as="al" t-out="al"/>
+                    <p t-if="partner.commercial_partner_id.vat">VAT: <t t-out="partner.commercial_partner_id.vat"/></p>
+                    <p t-if="partner.parent_id">Attn: <t t-out="partner.name"/></p>
+                </td>
+            </tr>
+
+            <!-- 3. Shipment details: compact 3-column grid, dynamic height
+                 (about 3 lines for normal data, wraps and grows for long values). -->
+            <tr class="sv-strip"><td colspan="4">SHIPMENT DETAILS</td></tr>
+            <tr>
+                <td colspan="4" class="sv-under sv-flow sv-compact">
+                    <t t-if="ship_pairs" t-call="solven_export_invoice.solven_ship_grid">
+                        <t t-set="grid_pairs" t-value="ship_pairs"/>
+                    </t>
+                    <span t-else="" class="ph">No shipment details entered.</span>
+                </td>
+            </tr>
+            <tr class="sv-strip"><td colspan="4">PAYMENT &amp; ORIGIN</td></tr>
+            <tr>
+                <td colspan="4" class="sv-under sv-flow sv-compact">
+                    <t t-call="solven_export_invoice.solven_ship_grid">
+                        <t t-set="grid_pairs" t-value="pay_pairs"/>
+                    </t>
+                </td>
+            </tr>
+
+            <!-- 4. Goods (80 mm minimum; grows onto a new page for long orders) -->
+            <tr class="sv-strip"><td>DESCRIPTION OF GOODS</td><td class="num">QUANTITY</td><td class="num">UNIT PRICE</td><td class="num">TOTAL</td></tr>
+            <tr>
+                <td colspan="4" class="sv-under sv-goods-cell">
+                    <table class="sv-goods">
+                        <colgroup><col style="width:100mm"/><col style="width:30mm"/><col style="width:30mm"/><col style="width:40mm"/></colgroup>
+                        <t t-foreach="lines" t-as="line">
+                            <t t-set="qty_uom" t-value="doc._solven_line_qty(line)"/>
+                            <t t-set="tmpl" t-value="line.product_id.product_tmpl_id"/>
+                            <tr class="sv-item">
+                                <td>
+                                    <div class="name" t-out="line.product_id.name or line.name"/>
+                                    <div class="sec" t-if="tmpl.solven_hs_code or tmpl.solven_packing">
+                                        <t t-if="tmpl.solven_hs_code">HS <t t-out="tmpl.solven_hs_code"/></t>
+                                        <t t-if="tmpl.solven_hs_code and tmpl.solven_packing"> · </t>
+                                        <t t-if="tmpl.solven_packing">Packing: <t t-out="tmpl.solven_packing"/></t>
+                                    </div>
+                                    <div class="sec" t-if="tmpl.weight or tmpl.solven_gross_weight">
+                                        <t t-if="tmpl.weight">Net Wt: <t t-out="tmpl.weight * qty_uom[0]" t-options="{'widget': 'float', 'precision': 2}"/> kg</t>
+                                        <t t-if="tmpl.weight and tmpl.solven_gross_weight"> · </t>
+                                        <t t-if="tmpl.solven_gross_weight">Gross Wt: <t t-out="tmpl.solven_gross_weight * qty_uom[0]" t-options="{'widget': 'float', 'precision': 2}"/> kg</t>
+                                    </div>
+                                </td>
+                                <td class="num"><t t-out="doc._solven_fmt_qty(qty_uom[0])"/> <t t-out="qty_uom[1].name"/></td>
+                                <td class="num"><t t-out="line.price_unit" t-options="{'widget': 'float', 'decimal_precision': 'Product Price'}"/></td>
+                                <td class="num"><t t-out="line.price_subtotal" t-options="{'widget': 'float', 'precision': currency.decimal_places}"/></td>
+                            </tr>
+                        </t>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- 5. Amount in words / totals -->
+            <tr class="sv-totals">
+                <td>
+                    <div class="sv-zone">AMOUNT IN WORDS</div>
+                    <div class="sv-words" t-out="currency.amount_to_text(doc.amount_total)"/>
+                </td>
+                <td colspan="3">
+                    <t t-if="doc.amount_tax">
+                        <table class="sv-taxes">
+                            <tr><td>SUB TOTAL</td><td class="num" t-out="doc.amount_untaxed" t-options="{'widget': 'monetary', 'display_currency': currency}"/></tr>
+                            <tr><td>TAXES</td><td class="num" t-out="doc.amount_tax" t-options="{'widget': 'monetary', 'display_currency': currency}"/></tr>
+                        </table>
+                        <div class="sv-zone num">TOTAL</div>
+                    </t>
+                    <div t-else="" class="sv-zone num">SUB TOTAL</div>
+                    <div class="sv-amount"><t t-out="currency.name"/> <t t-out="doc.amount_total" t-options="{'widget': 'float', 'precision': currency.decimal_places}"/></div>
+                </td>
+            </tr>
+
+            <!-- 6. Bank / Signature -->
+            <tr class="sv-strip"><td>BANK DETAILS</td><td colspan="3">SIGNATURE &amp; STAMP</td></tr>
+            <tr>
+                <td class="sv-under sv-party sv-h30">
+                    <t t-if="bank">
+                        <p>Beneficiary: <t t-out="bank.partner_id.name or company.name"/></p>
+                        <p t-if="bank.bank_id">Bank: <t t-out="bank.bank_id.name"/></p>
+                        <p>Account / IBAN: <t t-out="bank.acc_number"/></p>
+                        <p t-if="bank.bank_bic">SWIFT: <t t-out="bank.bank_bic"/></p>
+                        <p>Account Currency: <t t-out="(bank.currency_id or currency).name"/></p>
+                    </t>
+                    <p t-else="" class="ph">No bank account configured for this company.</p>
+                </td>
+                <td colspan="3" class="sv-under sv-party sv-h30"/>
+            </tr>
+
+            <!-- 7. Terms -->
+            <tr class="sv-strip"><td colspan="4">TERMS AND CONDITIONS</td></tr>
+            <tr>
+                <td colspan="4" class="sv-under sv-terms sv-h30">
+                    <div t-if="terms" t-out="terms"/>
+                    <t t-set="pterm" t-value="doc._solven_payment_term()"/>
+                    <div t-if="pterm.note" t-out="pterm.note"/>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        </div>
+        </div>
+    </template>
+</odoo>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_form_solven_export" model="ir.ui.view">
+        <field name="name">res.company.form.solven.export</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Export Documents" name="solven_export">
+                    <field name="solven_export_terms" placeholder="Terms and conditions printed on SOLVEN documents..."/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

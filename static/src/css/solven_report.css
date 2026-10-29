@@ -1,0 +1,144 @@
+/* SOLVEN export documents — A4 210x297 mm page, 200x285 mm frame.
+   Ported from solven-invoice.css; flex/grid replaced by tables so that
+   wkhtmltopdf (old QtWebKit) renders identically. All units in mm. */
+.solven .sv-page {
+  position: relative;
+  width: auto;
+  min-height: 297mm;
+  padding: 6mm 1mm 0;
+  box-sizing: border-box;
+  font-family: "Lato", "Helvetica Neue", Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.2;
+  color: #1a1a1a;
+  page-break-after: always;
+}
+.solven .sv-frame {
+  width: 200mm;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border: 0.35pt solid #808080;
+}
+.solven .sv-frame > tbody > tr > td {
+  padding: 0;
+  vertical-align: top;
+  border: 0.35pt solid #808080;
+  overflow: hidden;
+}
+.solven td.num, .solven .num { text-align: right; }
+
+/* Grey heading strips: 5 mm */
+.solven tr.sv-strip > td {
+  background: #e6e6e6;
+  height: 5mm;
+  line-height: 5mm;
+  padding: 0 2mm !important;
+  font-size: 10pt;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-bottom: 0 !important;
+  white-space: nowrap;
+}
+.solven td.sv-under { border-top: 0 !important; }
+/* wkhtmltopdf: td height excludes padding, so padded cells subtract 3 mm */
+.solven .sv-h30 { height: 27mm; }
+.solven .sv-h50 { height: 47mm; }
+
+/* 1. Header: 30 mm */
+.solven td.sv-header { position: relative; height: 30mm; }
+.solven .sv-logo { position: absolute; left: 3mm; top: 3mm; width: 40mm; }
+.solven .sv-tri { position: absolute; right: 0; top: 0; height: 30mm; }
+.solven .sv-title {
+  position: absolute; left: 3mm; bottom: 3mm;
+  font-size: 14pt; font-weight: 900; letter-spacing: 0.06em; line-height: 1;
+  white-space: nowrap;
+}
+.solven table.sv-meta {
+  position: absolute; right: 18mm; bottom: 3mm;
+  border-collapse: collapse; font-size: 11pt; line-height: 1.1;
+}
+.solven table.sv-meta td { padding: 0 0 0.4mm 3mm; border: 0; }
+.solven table.sv-meta td.k { color: #555; padding-left: 0; }
+.solven table.sv-meta td.v { text-align: right; font-weight: 700; }
+.solven table.sv-meta td.sm { font-size: 9pt; }
+
+/* Parties / bank */
+.solven .sv-party { padding: 1.5mm 2mm !important; }
+.solven .sv-party b { display: block; }
+.solven .sv-party p { margin: 0; }
+.solven .sv-party address { margin: 0; }
+.solven .ph { color: #777; font-style: italic; }
+
+/* 3. Shipment / payment pairs */
+.solven .sv-flow { padding: 1.5mm 2mm !important; }
+.solven table.sv-cols { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.solven table.sv-cols td { vertical-align: top; border: 0; padding: 0 2.5mm 0 0; }
+.solven .sv-pair { margin-bottom: 1.4mm; }
+.solven .sv-pair .l { font-size: 10pt; color: #555; line-height: 1.1; }
+.solven .sv-pair .v { line-height: 1.15; }
+
+/* Compact shipment / reference grid: no fixed height, 3 columns,
+   inline "Label value"; long values wrap and the row grows. */
+.solven td.sv-compact { padding: 1mm 2mm !important; height: auto; }
+.solven table.sv-ship { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.solven table.sv-ship td {
+  vertical-align: top; border: 0 !important; padding: 0.3mm 3mm 0.3mm 0;
+  font-size: 10pt; line-height: 1.25; word-wrap: break-word; overflow-wrap: break-word;
+}
+.solven table.sv-ship .l { color: #555; font-size: 9pt; margin-right: 1.5mm; }
+.solven table.sv-ship .v { font-weight: 700; }
+.solven .sv-missing { color: #b00020; font-weight: 700; }
+.solven .sv-status {
+  width: 200mm; text-align: center; font-weight: 900; letter-spacing: 0.1em;
+  color: #b00020; border: 0.35pt solid #b00020; margin-bottom: 1mm; font-size: 10pt;
+}
+
+/* 4. Goods: min 80 mm, rows 20 mm min, continuous column rules */
+.solven td.sv-goods-cell { height: 80mm; }
+.solven table.sv-goods {
+  width: 200mm; border-collapse: collapse; table-layout: fixed; height: 80mm;
+}
+.solven table.sv-goods td {
+  border: 0.35pt solid #808080;
+  vertical-align: top; padding: 1.5mm 2mm;
+}
+.solven tr.sv-item { height: 17mm; page-break-inside: avoid; }
+.solven tr.sv-item .name { font-weight: 700; }
+.solven tr.sv-item .sec { font-size: 10pt; color: #444; line-height: 1.2; }
+
+/* 5. Totals: 10 mm, no strips */
+.solven tr.sv-totals > td { height: 10mm; page-break-inside: avoid; }
+.solven .sv-zone {
+  height: 5mm; line-height: 5mm; padding: 0 2mm;
+  font-size: 10pt; font-weight: 700; letter-spacing: 0.02em;
+}
+.solven .sv-words { padding: 0 2mm 1mm; font-size: 10pt; }
+.solven .sv-amount {
+  height: 5mm; line-height: 5mm; padding: 0 2mm;
+  text-align: right; font-weight: 700; white-space: nowrap;
+}
+.solven table.sv-taxes { width: 100%; border-collapse: collapse; font-size: 9pt; color: #444; }
+.solven table.sv-taxes td { border: 0; padding: 0.5mm 2mm 0; }
+
+/* 7. Terms */
+.solven .sv-terms { padding: 1.5mm 2mm !important; font-size: 10pt; line-height: 1.25; }
+.solven .sv-terms p, .solven .sv-terms ol, .solven .sv-terms ul { margin: 0; }
+.solven .sv-terms ol, .solven .sv-terms ul { padding-left: 4mm; }
+
+/* Neutralise Bootstrap table styling from the report bundle */
+.solven table { margin: 0 !important; background: transparent !important; }
+.solven table.sv-meta td, .solven table.sv-cols td, .solven table.sv-taxes td,
+.solven table.sv-meta, .solven table.sv-cols, .solven table.sv-taxes, .solven table.sv-ship, .solven table.sv-ship tr { border: 0 !important; background: transparent !important; }
+.solven table.sv-meta tr, .solven table.sv-meta tbody,
+.solven table.sv-cols tr, .solven table.sv-cols tbody,
+.solven table.sv-taxes tr, .solven table.sv-taxes tbody,
+.solven table.sv-ship tr, .solven table.sv-ship tbody, .solven table.sv-ship colgroup { border: 0 !important; box-shadow: none !important; }
+.solven table.sv-ship > :not(caption) > * > * { border-width: 0 !important; box-shadow: none !important; padding-left: 0; }
+
+/* Packing list: 5-column frame (20/80/30/35/35 mm) */
+.solven table.sv-pack { width: 200mm; }
+.solven table.sv-pack-goods { width: 200mm; }
+
+/* Compact grid: no inner frame (beats generic report table borders). */
+.solven .sv-frame td.sv-compact table.sv-ship,
+.solven .sv-frame td.sv-compact table.sv-ship td { border: none !important; border-style: none !important; outline: none !important; }

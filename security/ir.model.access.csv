@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_solven_packing_list_sale,solven.packing.list sales,model_solven_packing_list,sales_team.group_sale_salesman,1,1,1,0
+access_solven_packing_list_sale_manager,solven.packing.list sales manager,model_solven_packing_list,sales_team.group_sale_manager,1,1,1,1
+access_solven_packing_list_invoice,solven.packing.list invoicing,model_solven_packing_list,account.group_account_invoice,1,1,1,0
+access_solven_packing_list_line_sale,solven.packing.list.line sales,model_solven_packing_list_line,sales_team.group_sale_salesman,1,1,1,1
+access_solven_packing_list_line_invoice,solven.packing.list.line invoicing,model_solven_packing_list_line,account.group_account_invoice,1,1,1,1

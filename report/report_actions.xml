@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- New, separate actions: the standard Odoo reports stay untouched. -->
+    <record id="action_report_solven_commercial_invoice" model="ir.actions.report">
+        <field name="name">SOLVEN Commercial Invoice</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">solven_export_invoice.report_commercial_invoice</field>
+        <field name="report_file">solven_export_invoice.report_commercial_invoice</field>
+        <field name="print_report_name">'Commercial Invoice - %s' % (object.name or '').replace('/', '-')</field>
+        <field name="paperformat_id" ref="paperformat_solven_a4"/>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="action_report_solven_proforma_invoice" model="ir.actions.report">
+        <field name="name">SOLVEN Proforma Invoice</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">solven_export_invoice.report_proforma_invoice</field>
+        <field name="report_file">solven_export_invoice.report_proforma_invoice</field>
+        <field name="print_report_name">'Proforma Invoice - %s' % (object.solven_proforma_number or object.name or '').replace('/', '-')</field>
+        <field name="paperformat_id" ref="paperformat_solven_a4"/>
+        <field name="binding_model_id" ref="sale.model_sale_order"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="action_report_solven_packing_list" model="ir.actions.report">
+        <field name="name">SOLVEN Packing List</field>
+        <field name="model">solven.packing.list</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">solven_export_invoice.report_packing_list</field>
+        <field name="report_file">solven_export_invoice.report_packing_list</field>
+        <field name="print_report_name">'Packing List - %s' % (object.name or '').replace('/', '-')</field>
+        <field name="paperformat_id" ref="paperformat_solven_a4"/>
+        <field name="binding_model_id" ref="model_solven_packing_list"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="action_report_solven_quotation" model="ir.actions.report">
+        <field name="name">SOLVEN Quotation</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">solven_export_invoice.report_quotation</field>
+        <field name="report_file">solven_export_invoice.report_quotation</field>
+        <field name="print_report_name">'Quotation - %s' % (object.name or '')</field>
+        <field name="paperformat_id" ref="paperformat_solven_a4"/>
+        <field name="binding_model_id" ref="sale.model_sale_order"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

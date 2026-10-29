@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Multi-company: packing lists are only visible in the allowed companies. -->
+    <record id="rule_solven_packing_list_company" model="ir.rule">
+        <field name="name">SOLVEN Packing List: multi-company</field>
+        <field name="model_id" ref="model_solven_packing_list"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_solven_packing_list_line_company" model="ir.rule">
+        <field name="name">SOLVEN Packing List Line: multi-company</field>
+        <field name="model_id" ref="model_solven_packing_list_line"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

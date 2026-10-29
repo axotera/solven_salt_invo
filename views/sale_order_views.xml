@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_solven_export" model="ir.ui.view">
+        <field name="name">sale.order.form.solven.export</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_solven_issue_proforma" type="object" string="Issue Proforma No."
+                        invisible="solven_proforma_number or state == 'cancel'"/>
+                <button name="action_solven_create_packing_list" type="object" string="Create Packing List"
+                        invisible="state != 'sale'"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_solven_view_packing_lists" type="object" class="oe_stat_button"
+                        icon="fa-cubes" invisible="not solven_packing_list_count">
+                    <field name="solven_packing_list_count" widget="statinfo" string="Packing Lists"/>
+                </button>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Export Details" name="solven_export">
+                    <group>
+                        <group string="Shipment">
+                            <field name="solven_port_loading"/>
+                            <field name="solven_port_discharge"/>
+                            <field name="solven_transport_mode"/>
+                            <field name="solven_etd"/>
+                            <field name="solven_vessel_voyage"/>
+                            <field name="solven_bl_number"/>
+                            <field name="solven_container_number"/>
+                            <field name="solven_seal_number"/>
+                            <field name="solven_loading_berth"/>
+                            <field name="solven_stowage_reference"/>
+                            <field name="solven_atd"/>
+                        </group>
+                        <group string="Payment &amp; Origin">
+                            <field name="solven_origin_country_id"/>
+                            <field name="solven_lc_number"/>
+                            <field name="solven_doc_version"/>
+                        </group>
+                        <group string="Document References">
+                            <field name="solven_proforma_number"/>
+                            <field name="solven_proforma_date"/>
+                            <field name="solven_acid_required"/>
+                            <field name="solven_acid_number"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

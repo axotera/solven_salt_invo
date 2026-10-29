@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_solven_packing_list_form" model="ir.ui.view">
+        <field name="name">solven.packing.list.form</field>
+        <field name="model">solven.packing.list</field>
+        <field name="arch" type="xml">
+            <form string="Packing List">
+                <header>
+                    <button name="action_issue" type="object" string="Issue" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_fill_from_invoice" type="object" string="Copy Shipment Data from Invoice"
+                            invisible="not invoice_id or state != 'draft'"/>
+                    <button name="action_cancel" type="object" string="Cancel" invisible="state == 'cancel'"/>
+                    <button name="action_draft" type="object" string="Reset to Draft" invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-warning" role="alert" invisible="not warning_text">
+                        <field name="warning_text" readonly="1" nolabel="1"/>
+                    </div>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group string="Packing List">
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="sale_order_id" readonly="state != 'draft'"/>
+                            <field name="partner_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Related Documents">
+                            <field name="invoice_candidate_ids" invisible="1"/>
+                            <field name="invoice_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="invoice_number"/>
+                            <field name="invoice_date"/>
+                            <field name="proforma_number"/>
+                            <field name="proforma_date"/>
+                            <field name="solven_acid_required" readonly="state != 'draft'"/>
+                            <field name="solven_acid_number" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Goods &amp; Weights" name="lines">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id"/>
+                                    <field name="name"/>
+                                    <field name="quantity"/>
+                                    <field name="uom_id"/>
+                                    <field name="package_count" sum="Packages"/>
+                                    <field name="package_type"/>
+                                    <field name="net_weight" sum="Net"/>
+                                    <field name="gross_weight" sum="Gross"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Shipment Details" name="shipment">
+                            <group>
+                                <group>
+                                    <field name="solven_origin_country_id"/>
+                                    <field name="solven_port_loading"/>
+                                    <field name="solven_port_discharge"/>
+                                    <field name="solven_transport_mode"/>
+                                    <field name="solven_vessel_voyage"/>
+                                    <field name="solven_bl_number"/>
+                                </group>
+                                <group>
+                                    <field name="solven_container_number"/>
+                                    <field name="solven_seal_number"/>
+                                    <field name="solven_loading_berth"/>
+                                    <field name="solven_stowage_reference"/>
+                                    <field name="solven_etd"/>
+                                    <field name="solven_atd"/>
+                                </group>
+                            </group>
+                            <field name="note" placeholder="Internal notes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_solven_packing_list_list" model="ir.ui.view">
+        <field name="name">solven.packing.list.list</field>
+        <field name="model">solven.packing.list</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="state == 'cancel'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="partner_id"/>
+                <field name="sale_order_id"/>
+                <field name="invoice_number" string="Commercial Invoice"/>
+                <field name="solven_acid_number" optional="show"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_solven_packing_list_search" model="ir.ui.view">
+        <field name="name">solven.packing.list.search</field>
+        <field name="model">solven.packing.list</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="sale_order_id"/>
+                <field name="invoice_id"/>
+                <field name="solven_acid_number"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="no_invoice" string="Without Commercial Invoice" domain="[('invoice_id', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_solven_packing_list" model="ir.actions.act_window">
+        <field name="name">Packing Lists</field>
+        <field name="res_model">solven.packing.list</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_solven_packing_list" name="SOLVEN Packing Lists"
+              parent="sale.sale_order_menu" action="action_solven_packing_list" sequence="40"/>
+</odoo>
