@@ -153,6 +153,18 @@ class TestSolvenDocuments(TransactionCase):
         self.assertNotIn("ACID", html)
         self.assertNotIn("MISSING", html)
 
+    def test_acid_linked_between_invoice_and_packing_list(self):
+        move = self._invoice(self._order(solven_acid_number="ACID-A"))
+        self._render("solven_export_invoice.report_commercial_invoice", move)
+        pl = move.solven_packing_list_ids
+        self.assertEqual(len(pl), 1)
+        self.assertEqual(pl.solven_acid_number, "ACID-A")
+        move.solven_acid_number = "ACID-B"
+        self.assertEqual(pl.solven_acid_number, "ACID-B")
+        pl.solven_acid_number = "ACID-C"
+        self.assertEqual(move.solven_acid_number, "ACID-C")
+        self.assertIn("ACID-C", self._render("solven_export_invoice.report_packing_list", pl))
+
     # --- Currency ----------------------------------------------------------------
     def test_currency_default_usd_and_choices(self):
         order = self._order(confirm=False)

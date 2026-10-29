@@ -75,8 +75,6 @@
                             <field name="solven_lc_number"/>
                             <field name="solven_notify_party_id"/>
                             <field name="solven_doc_version"/>
-                            <field name="solven_acid_required"/>
-                            <field name="solven_acid_number"/>
                         </group>
                     </group>
                 </page>

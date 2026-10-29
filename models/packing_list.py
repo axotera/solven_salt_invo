@@ -68,6 +68,11 @@ class SolvenPackingList(models.Model):
         help="Posted customer invoice this shipment belongs to.",
     )
     invoice_number = fields.Char(related="invoice_id.name", string="Commercial Invoice No.")
+    # ACID is linked to the Commercial Invoice: one value, edited on either document.
+    solven_acid_number = fields.Char(
+        related="invoice_id.solven_acid_number", store=True, readonly=False, string="ACID No.")
+    solven_acid_required = fields.Boolean(
+        related="invoice_id.solven_acid_required", store=True, readonly=False, string="ACID Required")
     invoice_date = fields.Date(related="invoice_id.invoice_date", string="Commercial Invoice Date")
     proforma_number = fields.Char("Related Proforma Invoice No.", compute="_compute_proforma")
     proforma_date = fields.Date("Proforma Invoice Date", compute="_compute_proforma")
