@@ -6,13 +6,16 @@
                 <t t-set="doc" t-value="doc.with_context(lang=doc.partner_id.lang)"/>
                 <t t-call="solven_export_invoice.solven_document">
                     <t t-set="solven_title" t-value="'PROFORMA INVOICE'"/>
-                    <t t-set="solven_no_label" t-value="'Proforma Invoice No.'"/>
-                    <!-- Issued once (see report/proforma_invoice.py); stable on reprint. -->
-                    <t t-set="solven_no" t-value="doc.solven_proforma_number"/>
-                    <t t-set="solven_date_label" t-value="'Proforma Date'"/>
-                    <t t-set="solven_date" t-value="doc._solven_fmt_date(doc.solven_proforma_date)"/>
+                    <t t-set="show_notify" t-value="True"/>
+                    <!-- Proforma number issued once (see report/proforma_invoice.py); stable on reprint. -->
+                    <t t-set="solven_meta" t-value="[
+                        ('Proforma No.', doc.solven_proforma_number),
+                        ('Version', doc.solven_doc_version),
+                        ('Date', doc._solven_fmt_date(doc.solven_proforma_date), True),
+                        ('Quotation Ref.', doc.name, True),
+                        ('Customer Code', doc.partner_id.commercial_partner_id.ref),
+                    ]"/>
                     <t t-set="solven_shipment" t-value="[
-                        ('Country of Origin', doc.solven_origin_country_id.name),
                         ('Port of Loading', doc.solven_port_loading),
                         ('Port of Discharge', doc.solven_port_discharge),
                         ('Incoterms', doc._solven_incoterm_label()),
@@ -20,12 +23,12 @@
                         ('ETD', doc._solven_fmt_date(doc.solven_etd)),
                     ]"/>
                     <t t-set="solven_payment" t-value="[
-                        ('Payment Terms', doc.payment_term_id.name),
+                        ('Payment Terms', doc._solven_payment_label()),
                         ('Currency', doc.currency_id.name),
-                        ('Sales Order', doc.name),
+                        ('Country of Origin', doc.solven_origin_country_id.name),
                         ('Customer PO', doc._solven_customer_po()),
                         ('L/C No.', doc.solven_lc_number),
-                        ('ACID No.', doc.solven_acid_number, doc.solven_acid_required),
+                        ('Validity Date', doc._solven_fmt_date(doc.validity_date)),
                     ]"/>
                 </t>
             </t>

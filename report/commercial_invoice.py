@@ -20,4 +20,7 @@ class ReportCommercialInvoice(models.AbstractModel):
                     ", ".join(invalid.mapped("display_name")),
                 )
             )
+        # Printing the Commercial Invoice prepares its Packing List (same number
+        # and date). Reprints reuse it: no duplicate, no new number, no posting.
+        docs.filtered(lambda m: m.move_type == "out_invoice")._solven_prepare_packing_list()
         return {"doc_ids": docs.ids, "doc_model": "account.move", "docs": docs}

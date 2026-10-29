@@ -1,127 +1,126 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        SOLVEN Packing List (solven.packing.list: own number, linked to
-        the sales order and the posted Commercial Invoice), matching the PACK reference layout.
-        Reuses the shared SOLVEN header (logo, triangle, meta table) and the
-        FROM/TO section exactly as in solven_document; sections 2-4 are
-        rebuilt per the reference: origin/destination + vessel block,
-        5-column goods table (NO. / DESCRIPTION / QTY / NET / GROSS),
-        TOTALS + SIGNATURE & STAMP.
-        Empty optional fields are hidden, never invented.
+        SOLVEN Packing List, matching the PACK reference layout. Number and date
+        are the linked Commercial Invoice's own number and issue date.
+        No document-reference block: the number already is the invoice number.
     -->
     <template id="solven_packing_list_document">
         <t t-set="company" t-value="doc.company_id"/>
         <t t-set="partner" t-value="doc.partner_id"/>
         <t t-set="lines" t-value="doc._solven_lines()"/>
-        <t t-set="vessel_pairs" t-value="doc._solven_pairs(solven_vessel)"/>
         <t t-set="totals" t-value="doc._solven_pack_totals()"/>
+        <t t-set="dest" t-value="doc._solven_destination_country()"/>
+        <t t-set="left_pairs" t-value="doc._solven_pairs([
+            ('Origin', doc.solven_origin_country_id.name),
+            ('Destination', dest.name if dest else False),
+        ])"/>
+        <t t-set="right_pairs" t-value="doc._solven_pairs([
+            ('Vessel / Voyage', doc.solven_vessel_voyage),
+            ('Seal No', doc.solven_seal_number),
+            ('Container No', doc.solven_container_number),
+            ('Loading Berth', doc.solven_loading_berth),
+            ('Stowage Plan Reference', doc.solven_stowage_reference),
+            ('Port of Loading', doc.solven_port_loading),
+            ('Port of Discharge', doc.solven_port_discharge),
+            ('Mode of Transport', doc.solven_transport_mode),
+            ('B/L / AWB No', doc.solven_bl_number),
+            ('ETD', doc._solven_fmt_date(doc.solven_etd)),
+            ('ATD', doc._solven_fmt_date(doc.solven_atd)),
+            ('ACID No', doc.solven_acid_number),
+        ])"/>
         <div class="article solven" t-att-data-oe-model="doc._name" t-att-data-oe-id="doc.id">
         <div class="sv-page">
-        <div t-if="doc.state != 'done'" class="sv-status" t-out="'CANCELLED' if doc.state == 'cancel' else 'DRAFT - NOT ISSUED'"/>
-        <table class="sv-frame sv-pack">
-            <colgroup>
-                <col style="width:20mm"/><col style="width:80mm"/><col style="width:30mm"/><col style="width:35mm"/><col style="width:35mm"/>
-            </colgroup>
-            <tbody>
-            <!-- 1. Header (shared SOLVEN header, title/label set by caller) -->
-            <tr>
-                <td colspan="5" class="sv-header">
-                    <img class="sv-logo" src="/solven_export_invoice/static/img/logo03.svg" alt="SOLVEN"/>
-                    <img class="sv-tri" src="/solven_export_invoice/static/img/tri03.svg" alt=""/>
-                    <div class="sv-title" t-out="solven_title"/>
-                    <table class="sv-meta">
-                        <tr><td class="k" t-out="solven_no_label"/><td class="v" t-out="solven_no"/></tr>
-                        <tr t-if="doc.solven_doc_version"><td class="k">Version</td><td class="v" t-out="doc.solven_doc_version"/></tr>
-                        <tr t-if="solven_date"><td class="k" t-out="solven_date_label"/><td class="v sm" t-out="solven_date"/></tr>
-                        <tr t-if="partner.commercial_partner_id.ref"><td class="k">Customer Code</td><td class="v" t-out="partner.commercial_partner_id.ref"/></tr>
-                    </table>
-                </td>
-            </tr>
+            <div class="sv-probe"/>
+            <div t-if="doc.state != 'done'" class="sv-status" t-out="'CANCELLED' if doc.state == 'cancel' else 'DRAFT - NOT ISSUED'"/>
+            <t t-call="solven_export_invoice.solven_header">
+                <t t-set="solven_title" t-value="'PACKING LIST'"/>
+                <t t-set="solven_meta" t-value="[
+                    ('Packing List No.', doc.solven_number),
+                    ('Version', doc.solven_doc_version),
+                    ('Date', doc._solven_fmt_date(doc.date), True),
+                    ('Customer Code', partner.commercial_partner_id.ref),
+                ]"/>
+            </t>
+            <t t-call="solven_export_invoice.solven_parties"/>
 
-            <!-- 2. From / To (identical to solven_document section 2) -->
-            <tr class="sv-strip"><td colspan="2">FROM</td><td colspan="3">TO</td></tr>
-            <tr>
-                <td colspan="2" class="sv-under sv-party sv-h30">
-                    <b t-out="company.partner_id.name"/>
-                    <p t-foreach="doc._solven_address_lines(company.partner_id)" t-as="al" t-out="al"/>
-                    <p t-if="company.vat">Tax ID: <t t-out="company.vat"/></p>
-                    <p t-if="company.email" t-out="company.email"/>
-                </td>
-                <td colspan="3" class="sv-under sv-party sv-h30">
-                    <b t-out="partner.commercial_partner_id.name"/>
-                    <p t-foreach="doc._solven_address_lines(partner.commercial_partner_id if not (partner.street or partner.city) else partner)" t-as="al" t-out="al"/>
-                    <p t-if="partner.commercial_partner_id.vat">VAT: <t t-out="partner.commercial_partner_id.vat"/></p>
-                    <p t-if="partner.parent_id">Attn: <t t-out="partner.name"/></p>
-                </td>
-            </tr>
-
-            <!-- 3. Document references: own number vs. related documents -->
-            <tr class="sv-strip"><td colspan="5">DOCUMENT REFERENCES</td></tr>
-            <tr>
-                <td colspan="5" class="sv-under sv-flow sv-compact">
-                    <t t-call="solven_export_invoice.solven_ship_grid">
-                        <t t-set="grid_pairs" t-value="doc._solven_pairs(solven_refs)"/>
-                    </t>
-                </td>
-            </tr>
-
-            <!-- 3b. Shipment details: compact grid, dynamic height -->
-            <tr class="sv-strip"><td colspan="5">SHIPMENT DETAILS</td></tr>
-            <tr>
-                <td colspan="5" class="sv-under sv-flow sv-compact">
-                    <t t-if="vessel_pairs" t-call="solven_export_invoice.solven_ship_grid">
-                        <t t-set="grid_pairs" t-value="vessel_pairs"/>
-                    </t>
-                    <span t-else="" class="ph">No shipment details entered.</span>
-                </td>
-            </tr>
-
-            <!-- 4. Goods: NO. / DESCRIPTION OF GOODS / QUANTITY / NET WEIGHT / GROSS WEIGHT -->
-            <tr class="sv-strip">
-                <td class="num">NO.</td><td>DESCRIPTION OF GOODS</td><td class="num">QUANTITY</td><td class="num">NET WEIGHT</td><td class="num">GROSS WEIGHT</td>
-            </tr>
-            <tr>
-                <td colspan="5" class="sv-under sv-goods-cell">
-                    <table class="sv-goods sv-pack-goods">
-                        <colgroup><col style="width:20mm"/><col style="width:80mm"/><col style="width:30mm"/><col style="width:35mm"/><col style="width:35mm"/></colgroup>
-                        <t t-foreach="lines" t-as="line">
-                            <t t-set="qty_uom" t-value="doc._solven_line_qty(line)"/>
-                            <t t-set="tmpl" t-value="line.product_id.product_tmpl_id"/>
-                            <tr class="sv-item">
-                                <td class="num" t-out="line_index + 1"/>
-                                <td>
-                                    <div class="name" t-out="line.name or line.product_id.name"/>
-                                    <t t-set="pack_txt" t-value="line._solven_packing_text()"/>
-                                    <div class="sec" t-if="tmpl.solven_hs_code or pack_txt">
-                                        <t t-if="tmpl.solven_hs_code">HS <t t-out="tmpl.solven_hs_code"/></t>
-                                        <t t-if="tmpl.solven_hs_code and pack_txt"> · </t>
-                                        <t t-if="pack_txt">Packing: <t t-out="pack_txt"/></t>
-                                    </div>
-                                </td>
-                                <td class="num"><t t-out="doc._solven_fmt_qty(qty_uom[0])"/> <t t-out="qty_uom[1].name"/></td>
-                                <td class="num"><t t-if="line.net_weight"><t t-out="line.net_weight" t-options="{'widget': 'float', 'precision': 2}"/> kg</t><span t-else="" class="sv-missing">MISSING</span></td>
-                                <td class="num"><t t-if="line.gross_weight"><t t-out="line.gross_weight" t-options="{'widget': 'float', 'precision': 2}"/> kg</t><span t-else="" class="sv-missing">MISSING</span></td>
-                            </tr>
+            <table class="sv-box sv-two">
+                <tr>
+                    <td class="sv-pl-origin">
+                        <t t-foreach="left_pairs" t-as="p">
+                            <div class="l" t-out="p[0]"/>
+                            <div class="v" t-out="p[1]"/>
                         </t>
-                    </table>
-                </td>
-            </tr>
+                    </td>
+                    <td class="sv-pl-ship">
+                        <table class="sv-inline">
+                            <tr t-foreach="right_pairs" t-as="p">
+                                <td class="k" t-out="p[0]"/><td class="v" t-out="p[1]"/>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
 
-            <!-- 5. Totals / Signature & Stamp -->
-            <tr class="sv-strip"><td colspan="2">TOTALS</td><td colspan="3">SIGNATURE &amp; STAMP</td></tr>
-            <tr>
-                <td colspan="2" class="sv-under sv-flow sv-h30">
-                    <div class="sv-pair" t-if="totals[3]"><div class="l">PACKAGES</div><div class="v" t-out="totals[3]"/></div>
-                    <div class="sv-pair" t-if="totals[0] is not False"><div class="l">QUANTITY</div><div class="v" t-out="doc._solven_fmt_qty(totals[0])"/></div>
-                    <div class="sv-pair" t-if="totals[1]"><div class="l">NET WEIGHT</div><div class="v"><t t-out="totals[1]" t-options="{'widget': 'float', 'precision': 2}"/> kg</div></div>
-                    <div class="sv-pair" t-if="totals[2]"><div class="l">GROSS WEIGHT</div><div class="v"><t t-out="totals[2]" t-options="{'widget': 'float', 'precision': 2}"/> kg</div></div>
-                </td>
-                <td colspan="3" class="sv-under sv-party sv-h30"/>
-            </tr>
-            </tbody>
-        </table>
+            <table class="sv-box sv-goods">
+                <colgroup><col style="width:20mm"/><col style="width:80mm"/><col style="width:30mm"/><col style="width:35mm"/><col style="width:35mm"/></colgroup>
+                <thead><tr class="sv-strip"><td class="c" style="text-align:center">NO.</td><td>DESCRIPTION OF GOODS</td><td class="num">QUANTITY</td><td class="num">NET WEIGHT</td><td class="num">GROSS WEIGHT</td></tr></thead>
+                <tbody>
+                    <t t-foreach="lines" t-as="line">
+                        <t t-set="tmpl" t-value="line.product_id.product_tmpl_id"/>
+                        <t t-set="pack_text" t-value="line._solven_packing_text()"/>
+                        <tr class="sv-item">
+                            <td class="c" t-out="line_index + 1"/>
+                            <td>
+                                <div class="name" t-out="line.name"/>
+                                <div class="sec" t-if="tmpl.solven_hs_code or pack_text">
+                                    <t t-if="tmpl.solven_hs_code">HS <t t-out="tmpl.solven_hs_code"/></t>
+                                    <t t-if="tmpl.solven_hs_code and pack_text"> · </t>
+                                    <t t-if="pack_text">Packing: <t t-out="pack_text"/></t>
+                                </div>
+                                <div class="sec" t-if="line.marks or line.volume_cbm">
+                                    <t t-if="line.marks">Marks: <t t-out="line.marks"/></t>
+                                    <t t-if="line.marks and line.volume_cbm"> · </t>
+                                    <t t-if="line.volume_cbm">Volume: <t t-out="doc._solven_fmt_num(line.volume_cbm, 3)"/> m³</t>
+                                </div>
+                            </td>
+                            <td class="num"><t t-out="doc._solven_fmt_qty(line.quantity)"/> <t t-out="line.uom_id.name"/></td>
+                            <td class="num"><t t-if="line.net_weight"><t t-out="doc._solven_fmt_num(line.net_weight)"/> kg</t></td>
+                            <td class="num"><t t-if="line.gross_weight"><t t-out="doc._solven_fmt_num(line.gross_weight)"/> kg</t></td>
+                        </tr>
+                    </t>
+                    <tr class="sv-fill"><td/><td/><td/><td/><td/></tr>
+                </tbody>
+            </table>
+
+            <div class="sv-foot">
+                <table class="sv-box">
+                    <colgroup><col style="width:100mm"/><col style="width:30mm"/><col style="width:35mm"/><col style="width:35mm"/></colgroup>
+                    <tr class="sv-pl-sum">
+                        <td/>
+                        <td class="num"><t t-if="totals['qty']"><t t-out="doc._solven_fmt_qty(totals['qty'])"/> <t t-out="totals['uom']"/></t></td>
+                        <td class="num"><t t-if="totals['net']"><t t-out="doc._solven_fmt_num(totals['net'])"/> kg</t></td>
+                        <td class="num"><t t-if="totals['gross']"><t t-out="doc._solven_fmt_num(totals['gross'])"/> kg</t></td>
+                    </tr>
+                </table>
+                <table class="sv-box sv-two">
+                    <tr class="sv-strip"><td>TOTALS</td><td class="num">SIGNATURE &amp; STAMP</td></tr>
+                    <tr>
+                        <td class="sv-pl-totals">
+                            <table class="sv-inline">
+                                <tr t-if="totals['qty']"><td class="k">QUANTITY</td><td class="v"><t t-out="doc._solven_fmt_qty(totals['qty'])"/> <t t-out="totals['uom']"/></td></tr>
+                                <tr t-if="totals['packages']"><td class="k">PACKAGES</td><td class="v"><t t-out="doc._solven_fmt_qty(totals['packages'])"/> <t t-out="totals['package_type'] or ''"/></td></tr>
+                                <tr t-if="totals['net']"><td class="k">NET WEIGHT</td><td class="v"><t t-out="doc._solven_fmt_num(totals['net'])"/> kg</td></tr>
+                                <tr t-if="totals['gross']"><td class="k">GROSS WEIGHT</td><td class="v"><t t-out="doc._solven_fmt_num(totals['gross'])"/> kg</td></tr>
+                                <tr t-if="totals['cbm']"><td class="k">VOLUME</td><td class="v"><t t-out="doc._solven_fmt_num(totals['cbm'], 3)"/> m³</td></tr>
+                            </table>
+                        </td>
+                        <td class="sv-pl-totals"/>
+                    </tr>
+                </table>
+            </div>
         </div>
+        <t t-call="solven_export_invoice.solven_paginate"/>
         </div>
     </template>
 
@@ -129,38 +128,7 @@
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="doc">
                 <t t-set="doc" t-value="doc.with_context(lang=doc.partner_id.lang)"/>
-                <t t-call="solven_export_invoice.solven_packing_list_document">
-                    <t t-set="solven_title" t-value="'PACKING LIST'"/>
-                    <t t-set="solven_no_label" t-value="'Packing List No.'"/>
-                    <t t-set="solven_no" t-value="doc.name"/>
-                    <t t-set="solven_date_label" t-value="'Packing List Date'"/>
-                    <t t-set="solven_date" t-value="doc._solven_fmt_date(doc.date)"/>
-                    <t t-set="solven_refs" t-value="[
-                        ('PACKING LIST NO.', doc.name, True),
-                        ('PACKING LIST DATE', doc._solven_fmt_date(doc.date), True),
-                        ('SALES ORDER', doc.sale_order_id.name, True),
-                        ('RELATED COMMERCIAL INVOICE NO.', doc.invoice_id.name, True),
-                        ('COMMERCIAL INVOICE DATE', doc._solven_fmt_date(doc.invoice_id.invoice_date), True),
-                        ('CUSTOMER PO', doc.sale_order_id.client_order_ref),
-                        ('RELATED PROFORMA INVOICE NO.', doc.proforma_number),
-                        ('PROFORMA INVOICE DATE', doc._solven_fmt_date(doc.proforma_date)),
-                        ('ACID NO.', doc.solven_acid_number, doc.solven_acid_required),
-                    ]"/>
-                    <t t-set="solven_vessel" t-value="[
-                        ('ORIGIN', doc.solven_origin_country_id.name and doc.solven_origin_country_id.name.upper()),
-                        ('DESTINATION', doc._solven_destination_country() and doc._solven_destination_country().upper()),
-                        ('PORT OF LOADING', doc.solven_port_loading),
-                        ('PORT OF DISCHARGE', doc.solven_port_discharge),
-                        ('VESSEL / VOYAGE', doc.solven_vessel_voyage),
-                        ('B/L NO', doc.solven_bl_number),
-                        ('CONTAINER NO', doc.solven_container_number),
-                        ('SEAL NO', doc.solven_seal_number),
-                        ('LOADING BERTH', doc.solven_loading_berth),
-                        ('STOWAGE PLAN REFERENCE', doc.solven_stowage_reference),
-                        ('ETD', doc._solven_fmt_date(doc.solven_etd)),
-                        ('ATD', doc._solven_fmt_date(doc.solven_atd)),
-                    ]"/>
-                </t>
+                <t t-call="solven_export_invoice.solven_packing_list_document"/>
             </t>
         </t>
     </template>

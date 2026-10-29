@@ -1,6 +1,6 @@
 {
     "name": "SOLVEN Export Documents",
-    "version": "19.0.1.2.0",
+    "version": "19.0.1.3.0",
     "summary": "SOLVEN Commercial Invoice, Proforma Invoice, Quotation and Packing List (A4 export layout)",
     "description": """
 Adds four SOLVEN export documents next to the standard Odoo reports:
@@ -8,8 +8,8 @@ Adds four SOLVEN export documents next to the standard Odoo reports:
 * Commercial Invoice  -> posted customer invoices / credit notes (account.move)
 * Proforma Invoice    -> sales orders (sale.order)
 * Quotation           -> sales orders (sale.order), with validity date
-* Packing List        -> own record (solven.packing.list) with its own number,
-                         linked to the sales order and posted Commercial Invoice
+* Packing List        -> solven.packing.list, prepared from the Commercial Invoice;
+                         prints the invoice's own number and issue date
 
 Standard Odoo invoice / quotation reports are NOT replaced.
 Adds optional export fields (ports, vessel, B/L, container, seal,
@@ -43,6 +43,7 @@ Empty optional fields are hidden, never invented.
             "solven_export_invoice/static/src/css/solven_report.css",
         ],
     },
+    "post_init_hook": "post_init_hook",
     "installable": True,
     "application": False,
 }

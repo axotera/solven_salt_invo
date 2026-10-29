@@ -5,40 +5,58 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_solven_print_documents" type="object"
+                        string="Commercial Invoice &amp; Packing List" class="btn-secondary"
+                        invisible="state != 'posted' or move_type != 'out_invoice'"/>
+                <button name="action_solven_open_packing_list" type="object" string="Review Packing List"
+                        invisible="state != 'posted' or move_type != 'out_invoice'"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_solven_view_packing_lists" type="object" class="oe_stat_button"
+                        icon="fa-cubes" invisible="not solven_packing_list_count">
+                    <field name="solven_packing_list_count" widget="statinfo" string="Packing Lists"/>
+                </button>
+            </xpath>
+            <!-- Native invoice currency, limited to the SOLVEN currencies. -->
+            <xpath expr="//div[@name='currency_div']//field[@name='currency_id']" position="attributes">
+                <attribute name="domain">[('name', 'in', ['USD', 'EUR', 'GBP', 'JPY', 'CNY', 'CHF', 'CAD', 'AUD', 'HKD', 'EGP'])]</attribute>
+            </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Export Details" name="solven_export"
                       invisible="move_type not in ('out_invoice', 'out_refund')">
                     <group>
-                        <group string="Shipment">
-                            <field name="solven_port_loading"/>
-                            <field name="solven_port_discharge"/>
-                            <field name="solven_transport_mode"/>
+                        <group string="Shipment Details">
+                            <field name="solven_port_loading_choice"/>
+                            <field name="solven_port_loading" string="Port of Loading (text)"
+                                   invisible="solven_port_loading_choice and solven_port_loading_choice != 'other'"/>
+                            <field name="solven_port_discharge_choice"/>
+                            <field name="solven_port_discharge" string="Port of Discharge (text)"
+                                   invisible="solven_port_discharge_choice and solven_port_discharge_choice != 'other'"/>
+                            <field name="solven_transport_choice"/>
+                            <field name="solven_transport_mode" string="Mode of Transport (text)"/>
                             <field name="solven_vessel_voyage"/>
                             <field name="solven_bl_number"/>
                             <field name="solven_container_number"/>
+                            <field name="solven_seal_number"/>
+                            <field name="solven_loading_berth"/>
+                            <field name="solven_stowage_reference"/>
                             <field name="solven_etd"/>
                             <field name="solven_atd"/>
-                        </group>
-                        <group string="Payment &amp; Origin">
-                            <field name="solven_origin_country_id"/>
-                            <field name="solven_lc_number"/>
-                            <field name="solven_doc_version"/>
-                        </group>
-                        <group string="Document References">
-                            <field name="solven_proforma_number"/>
-                            <field name="solven_proforma_date"/>
                             <field name="solven_acid_required"/>
                             <field name="solven_acid_number"/>
                         </group>
+                        <group string="Payment &amp; Origin">
+                            <field name="solven_payment_method"/>
+                            <field name="solven_payment_method_other" invisible="solven_payment_method != 'other'"/>
+                            <field name="solven_origin_country_id"/>
+                            <field name="solven_lc_number"/>
+                            <field name="solven_notify_party_id"/>
+                            <field name="solven_doc_version"/>
+                            <field name="solven_proforma_number" readonly="1"/>
+                            <field name="solven_proforma_date" readonly="1"/>
+                        </group>
                     </group>
-                    <field name="solven_packing_list_ids" readonly="1">
-                        <list>
-                            <field name="name"/>
-                            <field name="date"/>
-                            <field name="sale_order_id"/>
-                            <field name="state" widget="badge"/>
-                        </list>
-                    </field>
                 </page>
             </xpath>
         </field>

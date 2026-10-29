@@ -6,38 +6,36 @@
         <field name="arch" type="xml">
             <form string="Packing List">
                 <header>
-                    <button name="action_issue" type="object" string="Issue" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_fill_from_invoice" type="object" string="Copy Shipment Data from Invoice"
+                    <button name="action_issue" type="object" string="Confirm &amp; Issue" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_print" type="object" string="Print" invisible="state == 'cancel'"/>
+                    <button name="action_fill_from_invoice" type="object" string="Refresh from Invoice"
                             invisible="not invoice_id or state != 'draft'"/>
-                    <button name="action_cancel" type="object" string="Cancel" invisible="state == 'cancel'"/>
                     <button name="action_draft" type="object" string="Reset to Draft" invisible="state != 'cancel'"/>
+                    <button name="action_cancel" type="object" string="Cancel" invisible="state == 'cancel'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
                 </header>
                 <sheet>
                     <div class="alert alert-warning" role="alert" invisible="not warning_text">
                         <field name="warning_text" readonly="1" nolabel="1"/>
                     </div>
-                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <div class="oe_title"><h1><field name="solven_number" readonly="1"/></h1></div>
                     <group>
                         <group string="Packing List">
-                            <field name="date" readonly="state != 'draft'"/>
-                            <field name="sale_order_id" readonly="state != 'draft'"/>
+                            <field name="date" readonly="state != 'draft' or invoice_id"/>
                             <field name="partner_id"/>
-                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="sale_order_id" readonly="state != 'draft' or source == 'invoice'"/>
+                            <field name="source" invisible="1"/>
+                            <field name="company_id" groups="base.group_multi_company" readonly="1"/>
                         </group>
-                        <group string="Related Documents">
+                        <group string="Commercial Invoice">
                             <field name="invoice_candidate_ids" invisible="1"/>
-                            <field name="invoice_id" readonly="state != 'draft'" options="{'no_create': True}"/>
-                            <field name="invoice_number"/>
-                            <field name="invoice_date"/>
-                            <field name="proforma_number"/>
-                            <field name="proforma_date"/>
-                            <field name="solven_acid_required" readonly="state != 'draft'"/>
-                            <field name="solven_acid_number" readonly="state != 'draft'"/>
+                            <field name="invoice_id" readonly="state != 'draft' or source == 'invoice'" options="{'no_create': True}"/>
+                            <field name="proforma_number" invisible="not proforma_number"/>
+                            <field name="name" string="Internal Ref." invisible="name == solven_number"/>
                         </group>
                     </group>
                     <notebook>
-                        <page string="Goods &amp; Weights" name="lines">
+                        <page string="Goods, Packages &amp; Weights" name="lines">
                             <field name="line_ids" readonly="state != 'draft'">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
@@ -46,9 +44,12 @@
                                     <field name="quantity"/>
                                     <field name="uom_id"/>
                                     <field name="package_count" sum="Packages"/>
-                                    <field name="package_type"/>
+                                    <field name="package_type_choice"/>
+                                    <field name="package_type" optional="hide"/>
+                                    <field name="marks" optional="show"/>
                                     <field name="net_weight" sum="Net"/>
                                     <field name="gross_weight" sum="Gross"/>
+                                    <field name="volume_cbm" sum="CBM" optional="show"/>
                                 </list>
                             </field>
                         </page>
@@ -56,13 +57,20 @@
                             <group>
                                 <group>
                                     <field name="solven_origin_country_id"/>
-                                    <field name="solven_port_loading"/>
-                                    <field name="solven_port_discharge"/>
-                                    <field name="solven_transport_mode"/>
-                                    <field name="solven_vessel_voyage"/>
+                                    <field name="solven_port_loading_choice"/>
+                                    <field name="solven_port_loading" string="Port of Loading (text)"
+                                           invisible="solven_port_loading_choice and solven_port_loading_choice != 'other'"/>
+                                    <field name="solven_port_discharge_choice"/>
+                                    <field name="solven_port_discharge" string="Port of Discharge (text)"
+                                           invisible="solven_port_discharge_choice and solven_port_discharge_choice != 'other'"/>
+                                    <field name="solven_transport_choice"/>
+                                    <field name="solven_transport_mode" string="Mode of Transport (text)"/>
                                     <field name="solven_bl_number"/>
+                                    <field name="solven_acid_required"/>
+                                    <field name="solven_acid_number"/>
                                 </group>
                                 <group>
+                                    <field name="solven_vessel_voyage"/>
                                     <field name="solven_container_number"/>
                                     <field name="solven_seal_number"/>
                                     <field name="solven_loading_berth"/>
@@ -85,11 +93,11 @@
         <field name="model">solven.packing.list</field>
         <field name="arch" type="xml">
             <list decoration-muted="state == 'cancel'">
-                <field name="name"/>
+                <field name="solven_number"/>
                 <field name="date"/>
                 <field name="partner_id"/>
                 <field name="sale_order_id"/>
-                <field name="invoice_number" string="Commercial Invoice"/>
+                <field name="invoice_id" string="Commercial Invoice"/>
                 <field name="solven_acid_number" optional="show"/>
                 <field name="state" widget="badge"/>
             </list>
@@ -101,6 +109,7 @@
         <field name="model">solven.packing.list</field>
         <field name="arch" type="xml">
             <search>
+                <field name="solven_number"/>
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="sale_order_id"/>

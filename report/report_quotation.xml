@@ -6,22 +6,24 @@
                 <t t-set="doc" t-value="doc.with_context(lang=doc.partner_id.lang)"/>
                 <t t-call="solven_export_invoice.solven_document">
                     <t t-set="solven_title" t-value="'QUOTATION'"/>
-                    <t t-set="solven_no_label" t-value="'Quotation No.'"/>
-                    <t t-set="solven_no" t-value="doc.name"/>
-                    <t t-set="solven_date_label" t-value="'Date'"/>
-                    <t t-set="solven_date" t-value="doc._solven_fmt_date(doc.date_order)"/>
+                    <t t-set="solven_meta" t-value="[
+                        ('Quotation No.', doc.name),
+                        ('Version', doc.solven_doc_version),
+                        ('Date', doc._solven_fmt_date(doc.date_order), True),
+                        ('Customer Code', doc.partner_id.commercial_partner_id.ref),
+                    ]"/>
                     <t t-set="solven_shipment" t-value="[
-                        ('Country of Origin', doc.solven_origin_country_id.name),
                         ('Port of Loading', doc.solven_port_loading),
                         ('Port of Discharge', doc.solven_port_discharge),
                         ('Incoterms', doc._solven_incoterm_label()),
                         ('Mode of Transport', doc.solven_transport_mode),
                     ]"/>
                     <t t-set="solven_payment" t-value="[
-                        ('Payment Terms', doc.payment_term_id.name),
+                        ('Payment Terms', doc._solven_payment_label()),
                         ('Currency', doc.currency_id.name),
+                        ('Country of Origin', doc.solven_origin_country_id.name),
                         ('Validity Date', doc._solven_fmt_date(doc.validity_date)),
-                        ('L/C No.', doc.solven_lc_number),
+                        ('Delivery Date', doc._solven_fmt_date(doc.commitment_date)),
                     ]"/>
                 </t>
             </t>

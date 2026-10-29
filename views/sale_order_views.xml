@@ -6,9 +6,14 @@
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
-                <button name="action_solven_issue_proforma" type="object" string="Issue Proforma No."
+                <button name="action_solven_print_quotation" type="object" string="Print Quotation (SOLVEN)"
+                        invisible="state not in ('draft', 'sent')"/>
+                <button name="action_solven_issue_proforma" type="object" string="Convert to Proforma Invoice"
+                        class="btn-secondary"
                         invisible="solven_proforma_number or state == 'cancel'"/>
-                <button name="action_solven_create_packing_list" type="object" string="Create Packing List"
+                <button name="action_solven_issue_proforma" type="object" string="Print Proforma Invoice"
+                        invisible="not solven_proforma_number or state == 'cancel'"/>
+                <button name="action_solven_create_packing_list" type="object" string="Create Packing List (split shipment)"
                         invisible="state != 'sale'"/>
             </xpath>
             <xpath expr="//div[@name='button_box']" position="inside">
@@ -17,13 +22,45 @@
                     <field name="solven_packing_list_count" widget="statinfo" string="Packing Lists"/>
                 </button>
             </xpath>
+            <xpath expr="//div[hasclass('oe_title')]" position="inside">
+                <div class="text-muted" invisible="not solven_proforma_number">
+                    Proforma Invoice <field name="solven_proforma_number" class="oe_inline"/>
+                    of <field name="solven_proforma_date" class="oe_inline"/>
+                </div>
+            </xpath>
+            <!-- Currency in the payment area: drives the native pricelist/currency. -->
+            <xpath expr="//group/field[@name='payment_term_id']" position="before">
+                <label for="solven_currency_id" string="Currency"/>
+                <div class="o_row">
+                    <field name="solven_currency_id" options="{'no_create': True, 'no_open': True}"
+                           readonly="state not in ('draft', 'sent')"/>
+                    <button name="action_update_prices" type="object" string="Update Prices"
+                            class="btn-link mb-1 px-0" icon="fa-refresh"
+                            confirm="This will update the unit price of all products based on the new currency."
+                            invisible="not show_update_pricelist or state in ['sale', 'cancel']"
+                            groups="!product.group_product_pricelist"/>
+                </div>
+            </xpath>
+            <xpath expr="//group/field[@name='payment_term_id']" position="after">
+                <field name="solven_payment_method"/>
+                <field name="solven_payment_method_other" invisible="solven_payment_method != 'other'"
+                       required="solven_payment_method == 'other'"/>
+            </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Export Details" name="solven_export">
                     <group>
-                        <group string="Shipment">
-                            <field name="solven_port_loading"/>
-                            <field name="solven_port_discharge"/>
-                            <field name="solven_transport_mode"/>
+                        <group string="Shipment Details">
+                            <field name="solven_incoterm_id" options="{'no_create': True}"/>
+                            <field name="solven_incoterm_place" placeholder="e.g. Damietta"/>
+                            <field name="solven_port_loading_choice"/>
+                            <field name="solven_port_loading" string="Port of Loading (text)"
+                                   invisible="solven_port_loading_choice and solven_port_loading_choice != 'other'"/>
+                            <field name="solven_port_discharge_choice"/>
+                            <field name="solven_port_discharge" string="Port of Discharge (text)"
+                                   invisible="solven_port_discharge_choice and solven_port_discharge_choice != 'other'"/>
+                            <field name="solven_transport_choice"/>
+                            <field name="solven_transport_mode" string="Mode of Transport (text)"
+                                   placeholder="e.g. Sea freight, 2 × 40' reefer"/>
                             <field name="solven_etd"/>
                             <field name="solven_vessel_voyage"/>
                             <field name="solven_bl_number"/>
@@ -36,11 +73,8 @@
                         <group string="Payment &amp; Origin">
                             <field name="solven_origin_country_id"/>
                             <field name="solven_lc_number"/>
+                            <field name="solven_notify_party_id"/>
                             <field name="solven_doc_version"/>
-                        </group>
-                        <group string="Document References">
-                            <field name="solven_proforma_number"/>
-                            <field name="solven_proforma_date"/>
                             <field name="solven_acid_required"/>
                             <field name="solven_acid_number"/>
                         </group>

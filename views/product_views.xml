@@ -6,15 +6,20 @@
         <field name="inherit_id" ref="product.product_template_form_view"/>
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
-                <page string="Export" name="solven_export">
+                <page string="Export &amp; Packing" name="solven_export">
                     <group>
-                        <group>
+                        <group string="Customs">
                             <field name="solven_hs_code"/>
-                            <field name="solven_packing"/>
+                            <field name="solven_packing" placeholder="e.g. 15 kg telescopic cartons"/>
                         </group>
-                        <group>
-                            <field name="weight" string="Net Weight per Unit"/>
-                            <field name="solven_gross_weight"/>
+                        <group string="Per sales unit">
+                            <field name="weight" string="Net Weight (kg)"/>
+                            <field name="solven_gross_weight" string="Gross Weight (kg)"/>
+                            <field name="volume" string="Volume (m³)"/>
+                        </group>
+                        <group string="Default packaging">
+                            <field name="solven_package_type"/>
+                            <field name="solven_units_per_package"/>
                         </group>
                     </group>
                 </page>

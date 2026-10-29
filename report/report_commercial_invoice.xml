@@ -6,32 +6,37 @@
                 <t t-set="doc" t-value="doc.with_context(lang=doc.partner_id.lang)"/>
                 <t t-call="solven_export_invoice.solven_document">
                     <t t-set="solven_title" t-value="'CREDIT NOTE' if doc.move_type == 'out_refund' else 'COMMERCIAL INVOICE'"/>
-                    <t t-set="solven_no_label" t-value="'Invoice No.'"/>
-                    <!-- Official posted Odoo invoice number and date, never regenerated. -->
-                    <t t-set="solven_no" t-value="doc.name"/>
-                    <t t-set="solven_date_label" t-value="'Invoice Date'"/>
-                    <t t-set="solven_date" t-value="doc._solven_fmt_date(doc.invoice_date)"/>
+                    <t t-set="show_notify" t-value="True"/>
+                    <!-- Official posted Odoo invoice number and date, never regenerated.
+                         The linked Packing List prints exactly the same two values. -->
+                    <t t-set="solven_meta" t-value="[
+                        ('Invoice No.', doc.name),
+                        ('Version', doc.solven_doc_version),
+                        ('Date', doc._solven_fmt_date(doc.invoice_date), True),
+                        ('Proforma Ref.', doc.solven_proforma_number, True),
+                        ('Original Invoice', doc.reversed_entry_id.name if doc.move_type == 'out_refund' else False, True),
+                        ('Customer Code', doc.partner_id.commercial_partner_id.ref),
+                    ]"/>
                     <t t-set="solven_shipment" t-value="[
-                        ('Country of Origin', doc.solven_origin_country_id.name),
                         ('Port of Loading', doc.solven_port_loading),
                         ('Port of Discharge', doc.solven_port_discharge),
                         ('Incoterms', doc._solven_incoterm_label()),
                         ('Mode of Transport', doc.solven_transport_mode),
                         ('Vessel / Voyage', doc.solven_vessel_voyage),
-                        ('B/L No.', doc.solven_bl_number),
+                        ('B/L / AWB No.', doc.solven_bl_number),
                         ('Container No.', doc.solven_container_number),
+                        ('Seal No.', doc.solven_seal_number),
+                        ('ETD', doc._solven_fmt_date(doc.solven_etd)),
                         ('ATD', doc._solven_fmt_date(doc.solven_atd)),
+                        ('ACID No.', doc.solven_acid_number),
                     ]"/>
                     <t t-set="solven_payment" t-value="[
-                        ('Payment Terms', doc.invoice_payment_term_id.name),
+                        ('Payment Terms', doc._solven_payment_label()),
                         ('Currency', doc.currency_id.name),
+                        ('Country of Origin', doc.solven_origin_country_id.name),
                         ('Due Date', doc._solven_fmt_date(doc.invoice_date_due)),
                         ('Customer PO', doc._solven_customer_po()),
                         ('L/C No.', doc.solven_lc_number),
-                        ('Related Proforma Invoice No.', doc.solven_proforma_number),
-                        ('Proforma Invoice Date', doc._solven_fmt_date(doc.solven_proforma_date)),
-                        ('ACID No.', doc.solven_acid_number, doc.solven_acid_required),
-                        ('Original Invoice', doc.reversed_entry_id.name if doc.move_type == 'out_refund' else False),
                     ]"/>
                 </t>
             </t>
