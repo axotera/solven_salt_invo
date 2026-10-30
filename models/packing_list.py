@@ -269,12 +269,10 @@ class SolvenPackingList(models.Model):
         if not self.line_ids:
             warnings.append(_("No goods lines."))
         for line in self.line_ids:
-            if not line.net_weight:
-                warnings.append(_("Net weight missing for %s.", line.name))
-            if not line.gross_weight:
-                warnings.append(_("Gross weight missing for %s.", line.name))
             if line.net_weight and line.gross_weight and line.gross_weight < line.net_weight:
                 warnings.append(_("Gross weight is lower than net weight for %s.", line.name))
+            if not line.gross_weight:
+                warnings.append(_("Gross weight missing for %s.", line.name))
             if not line.product_id.solven_hs_code:
                 warnings.append(_("HS Code missing on product %s.", line.product_id.display_name))
         return errors, warnings
@@ -421,8 +419,12 @@ class SolvenPackingListLine(models.Model):
         tmpl = product.product_tmpl_id
         base_qty = _to_product_uom(qty, uom, product)
         vals = {}
-        # Net / gross weights are entered per shipment on the packing list; they
-        # are never derived from a per-unit product weight or the stock level.
+        # Net weight is the real product weight used for the shipment/packing line.
+        # Gross weight is a separate sales-unit value configured explicitly on the template.
+        if product.weight:
+            vals["net_weight"] = product.weight * base_qty
+        if tmpl.solven_gross_weight:
+            vals["gross_weight"] = tmpl.solven_gross_weight * base_qty
         if tmpl.volume:
             vals["volume_cbm"] = tmpl.volume * base_qty
         if tmpl.solven_package_type:

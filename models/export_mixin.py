@@ -226,7 +226,12 @@ class SolvenExportMixin(models.AbstractModel):
         return self.company_id.solven_export_terms or False
 
     def _solven_payment_term(self):
+        """Odoo payment term printed on Quotation / Proforma only. The
+        Commercial Invoice (account.move) never prints Odoo's default term;
+        it shows only the SOLVEN export payment method chosen explicitly."""
         self.ensure_one()
+        if self._name == "account.move":
+            return self.env["account.payment.term"]
         for fname in ("invoice_payment_term_id", "payment_term_id"):
             if fname in self._fields and self[fname]:
                 return self[fname]

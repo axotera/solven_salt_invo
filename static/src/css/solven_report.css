@@ -18,13 +18,29 @@
 
 /* Generic block: every block is a fixed-layout table with a hairline frame. */
 .solven table.sv-box {
-  width: 200mm; border-collapse: collapse; table-layout: fixed;
+  width: 200mm; border-collapse: collapse; border-spacing: 0; table-layout: fixed;
   margin: 0 !important; background: transparent !important;
 }
 .solven table.sv-box > tbody > tr > td,
 .solven table.sv-box > thead > tr > td,
 .solven table.sv-box > tr > td {
-  border: 1pt solid #2b2b2b; vertical-align: top;
+  border: 0.6pt solid #6e6e6e; vertical-align: top;
+}
+/* The pagination script injects a cloned header table when the goods table is
+   split across pages. Those nested tables must not receive the outer frame
+   border, or the PDF shows offset double lines at the page break. */
+.solven table.sv-box table.sv-box,
+.solven table.sv-box table.sv-box > tbody > tr > td,
+.solven table.sv-box table.sv-box > thead > tr > td,
+.solven table.sv-box table.sv-box > tr > td,
+.solven table.sv-box table.sv-box tr,
+.solven table.sv-box table.sv-box td,
+.solven table.sv-box table.sv-box th,
+.solven table.sv-head,
+.solven table.sv-head td,
+.solven .sv-rephead-box,
+.solven .sv-rephead-box td {
+  border: 0 !important; background: transparent !important; box-shadow: none !important;
 }
 .solven table.sv-box td { padding: 0; }
 .solven table.sv-box tr.sv-strip > td { padding: 0 2mm; }
@@ -90,13 +106,13 @@
 .solven table.sv-goods > tbody > tr > td {
   border-top: 0; border-bottom: 0; padding: 1.5mm 2mm 3mm;
 }
-.solven table.sv-goods > tbody > tr.sv-fill > td { padding: 0; height: 0; border-bottom: 1pt solid #2b2b2b; }
+.solven table.sv-goods > tbody > tr.sv-fill > td { padding: 0; height: 0; border-bottom: 0.6pt solid #6e6e6e; }
 .solven table.sv-goods > tbody > tr.sv-break > td {
   padding: 0; border-left: 0; border-right: 0; border-bottom: 0;
-  border-top: 1pt solid #2b2b2b; background: transparent;
+  border-top: 0.6pt solid #6e6e6e; background: transparent;
 }
 .solven table.sv-goods > tbody > tr.sv-break2 > td { border-top: 0; }
-.solven table.sv-goods > tbody > tr.sv-rephead > td { border: 1pt solid #2b2b2b; }
+.solven table.sv-goods > tbody > tr.sv-rephead > td { border: 0.6pt solid #6e6e6e; }
 .solven table.sv-goods thead { display: table-row-group; } /* header repeated by the script */
 .solven tr.sv-item { page-break-inside: avoid; }
 .solven tr.sv-item .name { font-weight: 700; }
@@ -105,8 +121,8 @@
 
 /* Footer block (anchored to the page bottom by the script) */
 .solven .sv-foot { page-break-inside: avoid; }
-.solven td.sv-words-cell { border-right: 0 !important; padding-bottom: 1mm; }
-.solven td.sv-sum-cell { border-left: 0 !important; padding-bottom: 1mm; }
+.solven td.sv-words-cell { border-right: 0.6pt solid #6e6e6e !important; width: 100mm; padding-bottom: 1mm; word-wrap: break-word; overflow-wrap: break-word; }
+.solven td.sv-sum-cell { width: 100mm; padding-bottom: 1mm; }
 .solven .sv-zone {
   height: 4.6mm; line-height: 4.6mm; padding: 0 2mm;
   font-size: 10pt; font-weight: 700; letter-spacing: 0.02em;
@@ -129,7 +145,7 @@
   border: 0 !important; background: transparent !important; padding: 0 0 0.2mm 0;
   font-size: 10.5pt; line-height: 1.25; vertical-align: top; word-wrap: break-word;
 }
-.solven table.sv-inline td.k { width: 46mm; text-transform: uppercase; color: #222; }
+.solven table.sv-inline td.k { width: 44mm; white-space: nowrap; text-transform: uppercase; color: #222; }
 .solven tr.sv-pl-sum > td { height: 8mm; vertical-align: middle !important; font-weight: 700; padding: 0 2mm !important; }
 .solven td.sv-pl-totals { padding: 2mm 3mm; height: 24mm; }
 .solven td.sv-pl-totals td.k { width: 40mm; font-size: 12pt; }
@@ -147,8 +163,11 @@
 .solven table > :not(caption) > * > * { box-shadow: none !important; }
 .solven table { margin: 0 !important; }
 
-/* Section strips: the rule sits on the upper side of the grey header only;
-   the strip flows straight into its content (approved reference). */
-.solven tr.sv-strip > td { border-bottom: 0 !important; }
-.solven tr.sv-strip + tr > td { border-top: 0 !important; }
-.solven table.sv-goods > tbody > tr.sv-rephead > td { border-bottom: 0 !important; }
+/* Every two-half block shares one straight divider at exactly 100 mm, and the
+   goods header strip carries the same column rules as its body. */
+.solven table.sv-two > tbody > tr > td, .solven table.sv-two > tr > td { width: 100mm; }
+.solven table.sv-goods > thead > tr.sv-strip > td { border: 0.6pt solid #6e6e6e; }
+.solven table.sv-goods > tbody > tr > td { border-left: 0.6pt solid #6e6e6e; border-right: 0.6pt solid #6e6e6e; }
+/* Packing list: both halves use the same key/value rows, font and padding. */
+.solven td.sv-pl-ship { padding: 2mm 3mm; height: 20mm; }
+.solven table.sv-inline td.v { text-align: left; unicode-bidi: plaintext; }

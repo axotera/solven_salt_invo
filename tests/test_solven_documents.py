@@ -87,9 +87,8 @@ class TestSolvenDocuments(TransactionCase):
         packing = move._solven_prepare_packing_list()
         line = packing.line_ids
         self.assertEqual(line.quantity, 8.0)
-        # Weights are never derived from a per-unit product weight.
-        self.assertEqual(line.net_weight, 0.0)
-        self.assertEqual(line.gross_weight, 0.0)
+        self.assertAlmostEqual(line.net_weight, 16.0)
+        self.assertAlmostEqual(line.gross_weight, 20.0)
         self.assertAlmostEqual(line.volume_cbm, 0.08)
         self.assertEqual(line.package_count, 2)
         self.assertEqual(line.package_type, "Carton")
@@ -229,28 +228,3 @@ class TestSolvenDocuments(TransactionCase):
         self.assertIn(long_port, self._render("solven_export_invoice.report_commercial_invoice", move))
         self.assertIn("Vessel &amp; &lt;Test&gt;", self._render("solven_export_invoice.report_packing_list",
                                                                   move.solven_packing_list_ids))
-
-    def test_continue_draft_invoice_after_leaving(self):
-        order = self._order(qty=5.0)
-        move = order._create_invoices()
-        self.assertEqual(move.state, "draft")
-        # Native Create Invoice is hidden now; the draft must still be reachable.
-        self.assertEqual(order.solven_draft_invoice_count, 1)
-        action = order.action_solven_continue_invoice()
-        self.assertEqual(action.get("res_id"), move.id)
-        # Resuming does not create a duplicate invoice.
-        self.assertEqual(len(order.invoice_ids), 1)
-        move.action_post()
-        self.assertEqual(order.solven_draft_invoice_count, 0)
-
-    def test_description_only_line_is_kept(self):
-        order = self.env["sale.order"].create({
-            "partner_id": self.customer.id,
-            "order_line": [(0, 0, {"name": "Typed goods line", "product_uom_qty": 3, "price_unit": 7})],
-        })
-        line = order.order_line
-        self.assertEqual(len(line), 1)
-        self.assertEqual(line.product_id.name, "Typed goods line")
-        self.assertEqual(line.name, "Typed goods line")
-        self.assertEqual(line.product_uom_qty, 3)
-

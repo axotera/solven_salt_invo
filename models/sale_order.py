@@ -45,34 +45,6 @@ class SaleOrder(models.Model):
             order.solven_packing_list_count = len(order.solven_packing_list_ids)
 
     # ------------------------------------------------------------------
-    # Create Invoice: resume an existing draft instead of getting stuck
-    # ------------------------------------------------------------------
-    solven_draft_invoice_ids = fields.Many2many(
-        "account.move", compute="_compute_solven_draft_invoice_ids", string="Draft Invoices")
-    solven_draft_invoice_count = fields.Integer(compute="_compute_solven_draft_invoice_ids")
-
-    @api.depends("invoice_ids.state", "invoice_ids.move_type")
-    def _compute_solven_draft_invoice_ids(self):
-        for order in self:
-            drafts = order.invoice_ids.filtered(
-                lambda m: m.state == "draft" and m.move_type == "out_invoice")
-            order.solven_draft_invoice_ids = drafts
-            order.solven_draft_invoice_count = len(drafts)
-
-    def action_solven_continue_invoice(self):
-        """Reopen the draft invoice(s) already created from this order.
-
-        Odoo counts draft invoice lines as invoiced, so after a first click on
-        Create Invoice the native button disappears. Leaving the draft (to
-        check or edit the order) must not block the user: this reopens the
-        existing draft so the process continues without a duplicate."""
-        self.ensure_one()
-        drafts = self.solven_draft_invoice_ids
-        if not drafts:
-            raise UserError(_("There is no draft invoice to continue for %s.", self.name))
-        return self.action_view_invoice(invoices=drafts)
-
-    # ------------------------------------------------------------------
     # Currency (through the native pricelist)
     # ------------------------------------------------------------------
     @api.depends("pricelist_id", "currency_id")
@@ -177,6 +149,27 @@ class SaleOrder(models.Model):
             lambda m: m.state == "posted" and m.move_type == "out_invoice"
         )
 
+    def _create_invoices(self, grouped=False, final=False, date=None):
+        """Reuse an existing draft invoice instead of creating a duplicate.
+
+        This keeps the Create Invoice action usable when the user returns to the
+        sales document after a partial workflow and then resumes later.
+        """
+        orders = self.filtered(lambda o: o.state in ("sale", "done"))
+        if not orders:
+            return super()._create_invoices(grouped=grouped, final=final, date=date)
+
+        result = self.env["account.move"]
+        for order in orders:
+            draft_invoice = order.invoice_ids.filtered(
+                lambda m: m.state == "draft" and m.move_type == "out_invoice"
+            )
+            if len(draft_invoice) == 1:
+                result |= draft_invoice
+                continue
+            result |= super(SaleOrder, order)._create_invoices(grouped=grouped, final=final, date=date)
+        return result
+
     # ------------------------------------------------------------------
     def _prepare_invoice(self):
         vals = super()._prepare_invoice()
@@ -229,32 +222,3 @@ class ProductPricelist(models.Model):
                 "company_id": False,
             })
         return pricelist.sudo(False)
-
-
-class SaleOrderLine(models.Model):
-    _inherit = "sale.order.line"
-
-    @api.model
-    def _solven_product_from_description(self, description):
-        """Product for a line that only has a typed description.
-
-        Odoo requires a product on every sales line, so a line typed without
-        picking a product would be lost. Reuse a product with exactly that
-        name, otherwise create one, so the typed line is saved and printed."""
-        name = (description or "").strip().splitlines()[0].strip()
-        Product = self.env["product.product"]
-        product = Product.search([("name", "=", name), ("sale_ok", "=", True)], limit=1)
-        if not product:
-            product = Product.create({"name": name, "type": "consu", "sale_ok": True})
-        return product
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if (not vals.get("display_type") and not vals.get("product_id")
-                    and not vals.get("is_downpayment") and (vals.get("name") or "").strip()):
-                product = self._solven_product_from_description(vals["name"])
-                vals["product_id"] = product.id
-                vals.setdefault("product_uom_id", product.uom_id.id)
-        return super().create(vals_list)
-

@@ -55,15 +55,17 @@ Back up your database first and test on a copy before production.
 - Company contact > bank account: printed in Bank Details (an invoice's own
   Recipient Bank takes priority).
 - Customer > Internal Reference: printed as Customer Code.
-- Product > **Export** tab: HS code, packing, net weight (standard Weight), gross weight per unit.
+- Product > **Export** tab: HS code, packing, Product Unit (native Odoo UOM), gross weight per unit.
+  The stock inventory weight remains separate and is not treated as the weight of each sold unit.
 - Sales order / invoice > **Export Details** tab: ports, transport, vessel,
   B/L, container, seal no, loading berth, stowage plan reference, ETD/ATD,
   L/C, country of origin, document version.
   Values on the order are copied to the invoice when it is created.
 - Packing List: origin/destination come from the order's Country of Origin
-  and the delivery address country; net weight uses the product's standard
-  Weight, gross weight the Export tab's Gross Weight per Unit; totals are
-  summed over the order lines.
+  and the delivery address country; net and gross shipment weights are kept
+  separate from native stock quantity and product inventory weight. The
+  Product Unit comes from Odoo's native UOM and totals are summed over the
+  order lines.
 - Incoterm: the invoice's standard Incoterm field. On sales orders it shows
   when the Inventory-based `sale_stock` module adds the field.
 - Customer PO: order "Customer Reference" / invoice "Reference".

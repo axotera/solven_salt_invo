@@ -13,7 +13,7 @@ class ProductTemplate(models.Model):
     solven_gross_weight = fields.Float(
         "Gross Weight per Unit",
         digits="Stock Weight",
-        help="Gross weight (kg) of one sales unit. Net weight uses the standard Weight field.",
+        help="Gross weight (kg) of one sales unit. This is distinct from the stock inventory weight.",
     )
     solven_package_type = fields.Selection(PACKAGE_TYPES, "Default Packaging")
     solven_units_per_package = fields.Float(

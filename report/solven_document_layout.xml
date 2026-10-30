@@ -33,6 +33,7 @@
     <template id="solven_parties">
         <t t-set="buyer" t-value="partner if (partner.street or partner.city) else partner.commercial_partner_id"/>
         <table class="sv-box sv-two">
+            <colgroup><col style="width:100mm"/><col style="width:100mm"/></colgroup>
             <tr class="sv-strip"><td t-out="from_label or 'FROM'"/><td t-out="to_label or 'TO'"/></tr>
             <tr>
                 <td class="sv-party">
@@ -72,6 +73,7 @@
 
     <template id="solven_ship_pay">
         <table class="sv-box sv-two">
+            <colgroup><col style="width:100mm"/><col style="width:100mm"/></colgroup>
             <tr class="sv-strip"><td>SHIPMENT DETAILS</td><td>PAYMENT &amp; ORIGIN</td></tr>
             <tr>
                 <td class="sv-flow">
@@ -129,21 +131,16 @@
                     body.insertBefore(tr, beforeRow);
                 }
                 var starts = [0]; /* document y where each printed page begins */
-                var skips = [0], skip = 0; /* cumulative print gap per page */
                 function brk(beforeRow) {
-                    /* Close this page well above its edge, then force a page break: the
-                       next printed page begins exactly at the forced-break row. */
-                    spacer(beforeRow, Math.max(0, Math.floor(pageEnd - top(beforeRow)) - 10), 'sv-break');
-                    spacer(beforeRow, Math.round(T), 'sv-break sv-break2');
-                    var sp2 = beforeRow.previousSibling;
-                    sp2.style.pageBreakBefore = 'always';
-                    var start = top(sp2);
-                    /* The forced break skips the unused space left on the closed page.
-                       Flowing content moves down by that gap, absolutely positioned
-                       elements (page numbers) do not: remember it so "Page x / y" stays
-                       on the same spot of every printed page. */
-                    skip += pageEnd - start;
-                    skips.push(skip);
+                    /* Keep the break deterministic and lightweight: one spacer row, then
+                       force the next page at the actual row boundary. This avoids adding
+                       extra inserted rows that can jitter the table mid-page in wkhtmltopdf. */
+                    var pad = Math.max(0, Math.floor(pageEnd - top(beforeRow)) - 8);
+                    if (pad > 0) {
+                        spacer(beforeRow, pad, 'sv-break');
+                    }
+                    beforeRow.style.pageBreakBefore = 'always';
+                    var start = top(beforeRow);
                     starts.push(start);
                     /* Repeat the full document header (logo, title, number, date) on every new page. */
                     var src = page.querySelector('table.sv-head');
@@ -186,7 +183,7 @@
                 for (var n = 0; n &lt; total; n++) {
                     var d = document.createElement('div');
                     d.className = 'sv-pageno';
-                    d.style.top = (starts[n] + skips[n] + P - B + 3 * mm - off) + 'px';
+                    d.style.top = (starts[n] + P - B + 3 * mm - off) + 'px';
                     d.innerHTML = 'Page ' + (n + 1) + ' / ' + total;
                     page.appendChild(d);
                 }
@@ -252,7 +249,7 @@
 
             <div class="sv-foot">
                 <table class="sv-box sv-totals">
-                    <colgroup><col style="width:120mm"/><col style="width:80mm"/></colgroup>
+                    <colgroup><col style="width:100mm"/><col style="width:100mm"/></colgroup>
                     <tr>
                         <td class="sv-words-cell">
                             <div class="sv-zone">AMOUNT IN WORDS</div>
@@ -272,6 +269,7 @@
                     </tr>
                 </table>
                 <table class="sv-box sv-two">
+            <colgroup><col style="width:100mm"/><col style="width:100mm"/></colgroup>
                     <tr class="sv-strip"><td>BANK DETAILS</td><td>SIGNATURE &amp; STAMP</td></tr>
                     <tr>
                         <td class="sv-party sv-h30">

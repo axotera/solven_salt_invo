@@ -45,17 +45,19 @@
             <t t-call="solven_export_invoice.solven_parties"/>
 
             <table class="sv-box sv-two">
+                <colgroup><col style="width:100mm"/><col style="width:100mm"/></colgroup>
                 <tr>
-                    <td class="sv-pl-origin">
-                        <t t-foreach="left_pairs" t-as="p">
-                            <div class="l" t-out="p[0]"/>
-                            <div class="v" t-out="p[1]"/>
-                        </t>
+                    <td class="sv-pl-ship">
+                        <table class="sv-inline">
+                            <tr t-foreach="left_pairs" t-as="p">
+                                <td class="k" t-out="p[0]"/><td class="v" t-out="p[1]"/>
+                            </tr>
+                        </table>
                     </td>
                     <td class="sv-pl-ship">
                         <table class="sv-inline">
                             <tr t-foreach="right_pairs" t-as="p">
-                                <td class="k" t-out="p[0]"/><td class="v" t-out="p[1]"/>
+                                <td class="k" t-out="p[0]"/><td class="v" dir="auto" t-out="p[1]"/>
                             </tr>
                         </table>
                     </td>

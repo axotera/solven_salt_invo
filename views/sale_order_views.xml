@@ -13,20 +13,8 @@
                         invisible="solven_proforma_number or state == 'cancel'"/>
                 <button name="action_solven_issue_proforma" type="object" string="Print Proforma Invoice"
                         invisible="not solven_proforma_number or state == 'cancel'"/>
-                <field name="solven_draft_invoice_count" invisible="1"/>
-                <button name="action_solven_continue_invoice" type="object" string="Continue Draft Invoice"
-                        class="btn-primary"
-                        invisible="not solven_draft_invoice_count or state != 'sale'"/>
                 <button name="action_solven_create_packing_list" type="object" string="Create Packing List (split shipment)"
                         invisible="state != 'sale'"/>
-            </xpath>
-            <!-- A line with only a typed description is kept: a product is created
-                 from the description on save (see sale.order.line.create). -->
-            <xpath expr="//field[@name='order_line']/list/field[@name='product_id']" position="attributes">
-                <attribute name="required">not display_type and not is_downpayment and not name</attribute>
-            </xpath>
-            <xpath expr="//field[@name='order_line']/list/field[@name='product_template_id']" position="attributes">
-                <attribute name="required">not display_type and not is_downpayment and not name</attribute>
             </xpath>
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_solven_view_packing_lists" type="object" class="oe_stat_button"
