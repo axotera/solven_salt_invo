@@ -129,6 +129,7 @@
                     body.insertBefore(tr, beforeRow);
                 }
                 var starts = [0]; /* document y where each printed page begins */
+                var skips = [0], skip = 0; /* cumulative print gap per page */
                 function brk(beforeRow) {
                     /* Close this page well above its edge, then force a page break: the
                        next printed page begins exactly at the forced-break row. */
@@ -137,6 +138,12 @@
                     var sp2 = beforeRow.previousSibling;
                     sp2.style.pageBreakBefore = 'always';
                     var start = top(sp2);
+                    /* The forced break skips the unused space left on the closed page.
+                       Flowing content moves down by that gap, absolutely positioned
+                       elements (page numbers) do not: remember it so "Page x / y" stays
+                       on the same spot of every printed page. */
+                    skip += pageEnd - start;
+                    skips.push(skip);
                     starts.push(start);
                     /* Repeat the full document header (logo, title, number, date) on every new page. */
                     var src = page.querySelector('table.sv-head');
@@ -179,7 +186,7 @@
                 for (var n = 0; n &lt; total; n++) {
                     var d = document.createElement('div');
                     d.className = 'sv-pageno';
-                    d.style.top = (starts[n] + P - B + 3 * mm - off) + 'px';
+                    d.style.top = (starts[n] + skips[n] + P - B + 3 * mm - off) + 'px';
                     d.innerHTML = 'Page ' + (n + 1) + ' / ' + total;
                     page.appendChild(d);
                 }
@@ -232,11 +239,6 @@
                                     <t t-if="tmpl.solven_hs_code and tmpl.solven_packing"> · </t>
                                     <t t-if="tmpl.solven_packing">Packing: <t t-out="tmpl.solven_packing"/></t>
                                 </div>
-                                <div class="sec" t-if="tmpl.weight or tmpl.solven_gross_weight">
-                                    <t t-if="tmpl.weight">Net Wt: <t t-out="doc._solven_fmt_num(tmpl.weight * qty_uom[0])"/> kg</t>
-                                    <t t-if="tmpl.weight and tmpl.solven_gross_weight"> · </t>
-                                    <t t-if="tmpl.solven_gross_weight">Gross Wt: <t t-out="doc._solven_fmt_num(tmpl.solven_gross_weight * qty_uom[0])"/> kg</t>
-                                </div>
                                 <div class="sec" t-if="line.discount">Discount: <t t-out="doc._solven_fmt_qty(line.discount)"/>%</div>
                             </td>
                             <td class="num"><t t-out="doc._solven_fmt_qty(qty_uom[0])"/> <t t-out="qty_uom[1].name"/></td>
@@ -250,6 +252,7 @@
 
             <div class="sv-foot">
                 <table class="sv-box sv-totals">
+                    <colgroup><col style="width:120mm"/><col style="width:80mm"/></colgroup>
                     <tr>
                         <td class="sv-words-cell">
                             <div class="sv-zone">AMOUNT IN WORDS</div>

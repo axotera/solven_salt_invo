@@ -12,11 +12,6 @@
                             <field name="solven_hs_code"/>
                             <field name="solven_packing" placeholder="e.g. 15 kg telescopic cartons"/>
                         </group>
-                        <group string="Per sales unit">
-                            <field name="weight" string="Net Weight (kg)"/>
-                            <field name="solven_gross_weight" string="Gross Weight (kg)"/>
-                            <field name="volume" string="Volume (m³)"/>
-                        </group>
                         <group string="Default packaging">
                             <field name="solven_package_type"/>
                             <field name="solven_units_per_package"/>

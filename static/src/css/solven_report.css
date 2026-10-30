@@ -24,7 +24,7 @@
 .solven table.sv-box > tbody > tr > td,
 .solven table.sv-box > thead > tr > td,
 .solven table.sv-box > tr > td {
-  border: 0.6pt solid #6e6e6e; vertical-align: top;
+  border: 1pt solid #2b2b2b; vertical-align: top;
 }
 .solven table.sv-box td { padding: 0; }
 .solven table.sv-box tr.sv-strip > td { padding: 0 2mm; }
@@ -90,13 +90,13 @@
 .solven table.sv-goods > tbody > tr > td {
   border-top: 0; border-bottom: 0; padding: 1.5mm 2mm 3mm;
 }
-.solven table.sv-goods > tbody > tr.sv-fill > td { padding: 0; height: 0; border-bottom: 0.6pt solid #6e6e6e; }
+.solven table.sv-goods > tbody > tr.sv-fill > td { padding: 0; height: 0; border-bottom: 1pt solid #2b2b2b; }
 .solven table.sv-goods > tbody > tr.sv-break > td {
   padding: 0; border-left: 0; border-right: 0; border-bottom: 0;
-  border-top: 0.6pt solid #6e6e6e; background: transparent;
+  border-top: 1pt solid #2b2b2b; background: transparent;
 }
 .solven table.sv-goods > tbody > tr.sv-break2 > td { border-top: 0; }
-.solven table.sv-goods > tbody > tr.sv-rephead > td { border: 0.6pt solid #6e6e6e; }
+.solven table.sv-goods > tbody > tr.sv-rephead > td { border: 1pt solid #2b2b2b; }
 .solven table.sv-goods thead { display: table-row-group; } /* header repeated by the script */
 .solven tr.sv-item { page-break-inside: avoid; }
 .solven tr.sv-item .name { font-weight: 700; }
@@ -105,8 +105,8 @@
 
 /* Footer block (anchored to the page bottom by the script) */
 .solven .sv-foot { page-break-inside: avoid; }
-.solven td.sv-words-cell { border-right: 0 !important; width: 120mm; padding-bottom: 1mm; }
-.solven td.sv-sum-cell { border-left: 0 !important; width: 80mm; padding-bottom: 1mm; }
+.solven td.sv-words-cell { border-right: 0 !important; padding-bottom: 1mm; }
+.solven td.sv-sum-cell { border-left: 0 !important; padding-bottom: 1mm; }
 .solven .sv-zone {
   height: 4.6mm; line-height: 4.6mm; padding: 0 2mm;
   font-size: 10pt; font-weight: 700; letter-spacing: 0.02em;
@@ -146,3 +146,9 @@
 .solven table.sv-pairs tr, .solven table.sv-inline tr, .solven table.sv-taxes tr { border: 0 !important; background: transparent !important; }
 .solven table > :not(caption) > * > * { box-shadow: none !important; }
 .solven table { margin: 0 !important; }
+
+/* Section strips: the rule sits on the upper side of the grey header only;
+   the strip flows straight into its content (approved reference). */
+.solven tr.sv-strip > td { border-bottom: 0 !important; }
+.solven tr.sv-strip + tr > td { border-top: 0 !important; }
+.solven table.sv-goods > tbody > tr.sv-rephead > td { border-bottom: 0 !important; }

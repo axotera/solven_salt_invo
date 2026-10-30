@@ -421,10 +421,8 @@ class SolvenPackingListLine(models.Model):
         tmpl = product.product_tmpl_id
         base_qty = _to_product_uom(qty, uom, product)
         vals = {}
-        if tmpl.weight:
-            vals["net_weight"] = tmpl.weight * base_qty
-        if tmpl.solven_gross_weight:
-            vals["gross_weight"] = tmpl.solven_gross_weight * base_qty
+        # Net / gross weights are entered per shipment on the packing list; they
+        # are never derived from a per-unit product weight or the stock level.
         if tmpl.volume:
             vals["volume_cbm"] = tmpl.volume * base_qty
         if tmpl.solven_package_type:
