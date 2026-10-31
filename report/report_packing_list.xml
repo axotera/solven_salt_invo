@@ -44,22 +44,19 @@
             </t>
             <t t-call="solven_export_invoice.solven_parties"/>
 
+            <!-- Label above value, same as the Proforma / Commercial Invoice blocks. -->
             <table class="sv-box sv-two">
                 <colgroup><col style="width:100mm"/><col style="width:100mm"/></colgroup>
                 <tr>
-                    <td class="sv-pl-ship">
-                        <table class="sv-inline">
-                            <tr t-foreach="left_pairs" t-as="p">
-                                <td class="k" t-out="p[0]"/><td class="v" t-out="p[1]"/>
-                            </tr>
-                        </table>
+                    <td class="sv-flow">
+                        <t t-call="solven_export_invoice.solven_pairs_block">
+                            <t t-set="block_pairs" t-value="left_pairs"/>
+                        </t>
                     </td>
-                    <td class="sv-pl-ship">
-                        <table class="sv-inline">
-                            <tr t-foreach="right_pairs" t-as="p">
-                                <td class="k" t-out="p[0]"/><td class="v" dir="auto" t-out="p[1]"/>
-                            </tr>
-                        </table>
+                    <td class="sv-flow">
+                        <t t-call="solven_export_invoice.solven_pairs_block">
+                            <t t-set="block_pairs" t-value="right_pairs"/>
+                        </t>
                     </td>
                 </tr>
             </table>

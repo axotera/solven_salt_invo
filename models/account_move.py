@@ -81,7 +81,7 @@ class AccountMove(models.Model):
         (or refreshed while in draft) at the same time."""
         self._solven_prepare_packing_list()
         return self.env.ref(
-            "solven_export_invoice.action_report_solven_commercial_invoice").report_action(self)
+            "solven_export_invoice.action_report_solven_commercial_invoice").report_action(self, config=False)
 
     def action_solven_open_packing_list(self):
         self.ensure_one()

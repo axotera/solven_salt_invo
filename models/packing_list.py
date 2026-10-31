@@ -338,7 +338,7 @@ class SolvenPackingList(models.Model):
                            if k != "solven_doc_version"})
 
     def action_print(self):
-        return self.env.ref("solven_export_invoice.action_report_solven_packing_list").report_action(self)
+        return self.env.ref("solven_export_invoice.action_report_solven_packing_list").report_action(self, config=False)
 
     def _solven_form_action(self):
         self.ensure_one()

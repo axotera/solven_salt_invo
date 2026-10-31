@@ -106,10 +106,10 @@ class SaleOrder(models.Model):
         record (customer, lines, prices, taxes, currency, terms and shipment
         data are reused, nothing is retyped) with its own Proforma number."""
         self._solven_ensure_proforma_number()
-        return self.env.ref("solven_export_invoice.action_report_solven_proforma_invoice").report_action(self)
+        return self.env.ref("solven_export_invoice.action_report_solven_proforma_invoice").report_action(self, config=False)
 
     def action_solven_print_quotation(self):
-        return self.env.ref("solven_export_invoice.action_report_solven_quotation").report_action(self)
+        return self.env.ref("solven_export_invoice.action_report_solven_quotation").report_action(self, config=False)
 
     # ------------------------------------------------------------------
     # Packing lists (split shipments from the order are still possible)
@@ -229,6 +229,23 @@ class SaleOrderLine(models.Model):
 
     solven_packaging_ids = fields.Many2many("solven.packaging", string="Packaging")
     solven_packaging_custom = fields.Char("Custom Packaging")
+
+    def _get_pricelist_price(self):
+        """Use the Sales Price typed on the product card as-is.
+
+        Without a pricelist rule, Odoo converts the product price from the
+        company currency into the order currency (e.g. 50 EGP -> 1.00 USD).
+        SOLVEN enters product prices directly in the trading currency, so the
+        quotation must show exactly the product card price. Pricelist rules,
+        when defined, still apply normally."""
+        self.ensure_one()
+        if self.pricelist_item_id or not self.product_id:
+            return super()._get_pricelist_price()
+        product = self.product_id.with_context(**self._get_product_price_context())
+        price = product.lst_price
+        if self.product_uom_id and product.uom_id and self.product_uom_id != product.uom_id:
+            price = product.uom_id._compute_price(price, self.product_uom_id)
+        return price
 
     def _prepare_invoice_line(self, **optional_values):
         vals = super()._prepare_invoice_line(**optional_values)
