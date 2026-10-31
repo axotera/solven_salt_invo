@@ -221,6 +221,7 @@
         <t t-set="lines" t-value="doc._solven_lines()"/>
         <t t-set="bank" t-value="doc._solven_bank_accounts()"/>
         <t t-set="terms" t-value="doc._solven_terms()"/>
+        <t t-set="line_notes" t-value="doc._solven_line_notes()"/>
         <div class="article solven" t-att-data-oe-model="doc._name" t-att-data-oe-id="doc.id">
         <div class="sv-page">
             <div class="sv-probe"/>
@@ -236,17 +237,11 @@
                         <t t-set="qty_uom" t-value="doc._solven_line_qty(line)"/>
                         <t t-set="tmpl" t-value="line.product_id.product_tmpl_id"/>
                         <t t-set="pname" t-value="line.product_id.name or line.name"/>
-                        <t t-set="extra" t-value="line.name if line.product_id and line.name and line.name.strip() != (line.product_id.display_name or '').strip() and line.name.strip() != (line.product_id.name or '').strip() else False"/>
+                        <t t-set="description" t-value="doc._solven_line_description(line, line_notes)"/>
                         <tr class="sv-item">
                             <td>
                                 <div class="name" t-out="pname"/>
-                                <div class="sec" t-if="extra" t-out="extra"/>
-                                <div class="sec" t-if="tmpl.solven_hs_code or tmpl.solven_packing">
-                                    <t t-if="tmpl.solven_hs_code">HS <t t-out="tmpl.solven_hs_code"/></t>
-                                    <t t-if="tmpl.solven_hs_code and tmpl.solven_packing"> · </t>
-                                    <t t-if="tmpl.solven_packing">Packing: <t t-out="tmpl.solven_packing"/></t>
-                                </div>
-                                <div class="sec" t-if="line.discount">Discount: <t t-out="doc._solven_fmt_qty(line.discount)"/>%</div>
+                                <div class="sec" t-if="description" t-out="description"/>
                             </td>
                             <td class="num"><t t-out="doc._solven_fmt_qty(qty_uom[0])"/> <t t-out="qty_uom[1].name"/></td>
                             <td class="num"><t t-out="line.price_unit" t-options="{'widget': 'float', 'decimal_precision': 'Product Price'}"/></td>
@@ -286,6 +281,9 @@
                             <t t-if="bank">
                                 <p>Beneficiary: <t t-out="bank.partner_id.name or company.name"/></p>
                                 <p t-if="bank.bank_id">Bank: <t t-out="bank.bank_id.name"/></p>
+                                <p t-if="bank.bank_id and (bank.bank_id.street or bank.bank_id.city or bank.bank_id.country)">
+                                    <t t-out="', '.join(filter(None, [bank.bank_id.street, bank.bank_id.street2, bank.bank_id.city, bank.bank_id.country]))"/>
+                                </p>
                                 <p><t t-out="'IBAN' if (bank.acc_type == 'iban') else 'Account No.'"/>: <t t-out="bank.acc_number"/></p>
                                 <p t-if="bank.bank_bic">SWIFT: <t t-out="bank.bank_bic"/></p>
                                 <p>Account Currency: <t t-out="(bank.currency_id or currency).name"/></p>

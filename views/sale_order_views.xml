@@ -5,6 +5,12 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']/list/field[@name='name']" position="after">
+                <field name="solven_packaging_ids" widget="many2many_tags" optional="show"
+                       options="{'no_create_edit': True}" invisible="display_type"/>
+                <field name="solven_packaging_custom" optional="show" invisible="display_type"
+                       placeholder="Custom packaging"/>
+            </xpath>
             <xpath expr="//header" position="inside">
                 <button name="action_solven_print_quotation" type="object" string="Print Quotation (SOLVEN)"
                         invisible="state not in ('draft', 'sent')"/>

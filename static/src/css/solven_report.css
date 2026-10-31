@@ -179,6 +179,8 @@
    goods header strip carries the same column rules as its body. */
 .solven table.sv-two > tbody > tr > td, .solven table.sv-two > tr > td { width: 100mm; }
 .solven table.sv-goods > thead > tr.sv-strip > td { border: 1px solid #808080; }
+.solven tr.sv-strip > td { border-bottom: 0 !important; }
+.solven tr.sv-strip + tr > td { border-top: 0 !important; }
 .solven table.sv-goods > tbody > tr > td { border-left: 1px solid #808080; border-right: 1px solid #808080; }
 /* Packing list: both halves use the same key/value rows, font and padding. */
 .solven td.sv-pl-ship { padding: 2mm 3mm; height: 20mm; }

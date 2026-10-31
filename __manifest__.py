@@ -26,6 +26,7 @@ Empty optional fields are hidden, never invented.
         "security/solven_security.xml",
         "data/paperformat.xml",
         "data/sequences.xml",
+        "data/packaging.xml",
         "views/product_views.xml",
         "views/res_company_views.xml",
         "views/sale_order_views.xml",

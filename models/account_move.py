@@ -94,3 +94,10 @@ class AccountMove(models.Model):
             "solven_export_invoice.action_solven_packing_list")
         action["domain"] = [("invoice_id", "=", self.id)]
         return action
+
+
+class AccountMoveLine(models.Model):
+    _inherit = "account.move.line"
+
+    solven_packaging_ids = fields.Many2many("solven.packaging", string="Packaging")
+    solven_packaging_custom = fields.Char("Custom Packaging")

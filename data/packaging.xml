@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="pack_pp25" model="solven.packaging"><field name="name">25 kg PP Bags</field><field name="sequence">10</field></record>
+    <record id="pack_pp25_liner" model="solven.packaging"><field name="name">25 kg PP Bags with PE Liner</field><field name="sequence">20</field></record>
+    <record id="pack_pp25_pallet" model="solven.packaging"><field name="name">25 kg PP Bags on Pallets, Shrink-Wrapped</field><field name="sequence">30</field></record>
+    <record id="pack_pp50" model="solven.packaging"><field name="name">50 kg PP Bags</field><field name="sequence">40</field></record>
+    <record id="pack_pp50_pallet" model="solven.packaging"><field name="name">50 kg PP Bags on Pallets, Shrink-Wrapped</field><field name="sequence">50</field></record>
+    <record id="pack_jumbo" model="solven.packaging"><field name="name">1 MT Jumbo Bags (FIBC)</field><field name="sequence">60</field></record>
+    <record id="pack_private_label" model="solven.packaging"><field name="name">Private Label Bags (Customer Branding)</field><field name="sequence">70</field></record>
+    <record id="pack_bulk_liner" model="solven.packaging"><field name="name">Bulk in Container (with Liner)</field><field name="sequence">80</field></record>
+    <record id="pack_bulk_vessel" model="solven.packaging"><field name="name">Bulk Cargo (Vessel)</field><field name="sequence">90</field></record>
+    <record id="pack_loose_cargo" model="solven.packaging"><field name="name">Loose Cargo (Break Bulk)</field><field name="sequence">100</field></record>
+    <record id="pack_jumbo_pallet" model="solven.packaging"><field name="name">1 MT Jumbo Bags on Pallets</field><field name="sequence">110</field></record>
+    <record id="pack_custom" model="solven.packaging"><field name="name">Other / Custom Packaging</field><field name="sequence">120</field></record>
+</odoo>

@@ -222,3 +222,18 @@ class ProductPricelist(models.Model):
                 "company_id": False,
             })
         return pricelist.sudo(False)
+
+
+class SaleOrderLine(models.Model):
+    _inherit = "sale.order.line"
+
+    solven_packaging_ids = fields.Many2many("solven.packaging", string="Packaging")
+    solven_packaging_custom = fields.Char("Custom Packaging")
+
+    def _prepare_invoice_line(self, **optional_values):
+        vals = super()._prepare_invoice_line(**optional_values)
+        vals.update({
+            "solven_packaging_ids": [fields.Command.set(self.solven_packaging_ids.ids)],
+            "solven_packaging_custom": self.solven_packaging_custom,
+        })
+        return vals

@@ -228,3 +228,36 @@ class TestSolvenDocuments(TransactionCase):
         self.assertIn(long_port, self._render("solven_export_invoice.report_commercial_invoice", move))
         self.assertIn("Vessel &amp; &lt;Test&gt;", self._render("solven_export_invoice.report_packing_list",
                                                                   move.solven_packing_list_ids))
+
+    def test_packaging_description_and_add_note_print_inline(self):
+        order = self.env["sale.order"].create({
+            "partner_id": self.customer.id,
+            "note": "Default Odoo Terms for SOLVEN",
+            "order_line": [
+                Command.create({
+                    "product_id": self.product.id,
+                    "product_uom_qty": 2,
+                    "price_unit": 10,
+                    "name": "Test Product\nFine refined salt 99.5%",
+                    "solven_packaging_ids": [Command.set([
+                        self.env.ref("solven_export_invoice.pack_pp25").id,
+                        self.env.ref("solven_export_invoice.pack_custom").id,
+                    ])],
+                    "solven_packaging_custom": "Big blue bags",
+                }),
+                Command.create({"display_type": "line_note", "name": "Shipment within 2 weeks"}),
+            ],
+        })
+        order.company_id.solven_export_terms = "Company default export terms"
+        html = self._render("solven_export_invoice.report_quotation", order)
+        for text in ("Fine refined salt 99.5%", "25 kg PP Bags", "Big blue bags",
+                     "Shipment within 2 weeks", "Default Odoo Terms for SOLVEN"):
+            self.assertIn(text, html)
+        self.assertNotIn("Test Product - Fine refined salt", html)
+        order.action_confirm()
+        move = self._invoice(order)
+        inv_line = move.invoice_line_ids.filtered(lambda line: line.display_type == "product")
+        self.assertEqual(inv_line.solven_packaging_ids, order.order_line.filtered(lambda line: not line.display_type).solven_packaging_ids)
+        html = self._render("solven_export_invoice.report_commercial_invoice", move)
+        for text in ("25 kg PP Bags", "Big blue bags", "Shipment within 2 weeks"):
+            self.assertIn(text, html)

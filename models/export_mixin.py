@@ -1,5 +1,5 @@
 from odoo import api, fields, models
-from odoo.tools import formatLang
+from odoo.tools import formatLang, is_html_empty
 
 # Currencies offered in the SOLVEN entry screens (USD is the default).
 SOLVEN_CURRENCIES = ["USD", "EUR", "GBP", "JPY", "CNY", "CHF", "CAD", "AUD", "HKD", "EGP"]
@@ -223,7 +223,61 @@ class SolvenExportMixin(models.AbstractModel):
 
     def _solven_terms(self):
         self.ensure_one()
-        return self.company_id.solven_export_terms or False
+        for field_name in ("note", "narration"):
+            if field_name in self._fields and not is_html_empty(self[field_name]):
+                return self[field_name]
+        if self.company_id.solven_export_terms and not is_html_empty(self.company_id.solven_export_terms):
+            return self.company_id.solven_export_terms
+        terms = getattr(self.company_id, "invoice_terms", False)
+        if terms and not is_html_empty(terms):
+            return terms
+        return False
+
+    def _solven_line_notes(self):
+        self.ensure_one()
+        lines = self.order_line if self._name == "sale.order" else self.invoice_line_ids
+        result, current, pending = {}, None, []
+        for line in lines.sorted(lambda item: (item.sequence, item.id)):
+            if line.display_type in (False, "product"):
+                current = line
+                if pending:
+                    result.setdefault(line.id, []).extend(pending)
+                    pending.clear()
+            elif line.display_type == "line_note" and (line.name or "").strip():
+                note = " ".join(line.name.split())
+                if current:
+                    result.setdefault(current.id, []).append(note)
+                else:
+                    pending.append(note)
+            else:
+                current = None
+        return result
+
+    def _solven_line_description(self, line, notes=None):
+        product = line.product_id
+        text = (line.name or "").strip()
+        if product:
+            names = {value.strip() for value in (product.display_name, product.name,
+                     product.product_tmpl_id.name) if value and value.strip()}
+            for name in sorted(names, key=len, reverse=True):
+                if text.startswith(name):
+                    text = text[len(name):].lstrip(" \t\r\n-:,·")
+                    break
+        parts = [" ".join(text.split())]
+        if product:
+            tmpl = product.product_tmpl_id
+            if tmpl.solven_hs_code:
+                parts.append(f"HS {tmpl.solven_hs_code}")
+            if tmpl.solven_packing:
+                parts.append(f"Packing: {tmpl.solven_packing}")
+        if "solven_packaging_ids" in line._fields:
+            parts.extend(line.solven_packaging_ids.mapped("name"))
+            if line.solven_packaging_custom:
+                parts.append(line.solven_packaging_custom.strip())
+        if line.discount:
+            parts.append(f"Discount: {self._solven_fmt_qty(line.discount)}%")
+        parts.extend((notes or {}).get(line.id, []))
+        return " - ".join(dict.fromkeys(part for part in parts if part))
 
     def _solven_payment_term(self):
         """Odoo payment term printed on Quotation / Proforma only. The
@@ -244,7 +298,13 @@ class SolvenExportMixin(models.AbstractModel):
         partner_bank = self["partner_bank_id"] if "partner_bank_id" in self._fields else False
         if partner_bank:
             return partner_bank
-        return self.company_id.partner_id.bank_ids[:1]
+        bank = self.company_id.partner_id.bank_ids[:1]
+        if not bank:
+            journal = self.env["account.journal"].sudo().search([
+                ("type", "=", "bank"), ("company_id", "=", self.company_id.id),
+                ("bank_account_id", "!=", False)], limit=1)
+            bank = journal.bank_account_id
+        return bank
 
     def _solven_export_vals(self):
         """Values of EXPORT_FIELDS that are set on this record (for copying)."""
@@ -260,3 +320,12 @@ class SolvenExportMixin(models.AbstractModel):
     @api.model
     def _solven_currency_domain(self):
         return [("name", "in", SOLVEN_CURRENCIES)]
+
+
+class SolvenPackaging(models.Model):
+    _name = "solven.packaging"
+    _description = "SOLVEN Product Packaging"
+    _order = "sequence, id"
+
+    name = fields.Char(required=True, translate=True)
+    sequence = fields.Integer(default=10)
