@@ -97,6 +97,10 @@
             function reset(page) {
                 var junk = page.querySelectorAll('tr.sv-break, tr.sv-rephead, tr.sv-fill-extra, .sv-pageno');
                 for (var i = 0; i &lt; junk.length; i++) { junk[i].parentNode.removeChild(junk[i]); }
+                /* Forced breaks from a previous run must not survive: a stale break
+                   on another row shifts every later page (header/footer cut off). */
+                var trs = page.querySelectorAll('table.sv-goods tr');
+                for (var t = 0; t &lt; trs.length; t++) { trs[t].style.pageBreakBefore = ''; }
                 var f = page.querySelector('tr.sv-fill:not(.sv-fill-extra)');
                 if (f) { f.style.height = '0px'; }
                 page.style.height = '';
@@ -120,7 +124,14 @@
                 var foot = page.querySelector('.sv-foot');
                 var ncol = head.cells.length;
                 var off = top(page);
-                var pageEnd = P; /* document coordinates: page k ends at k * P */
+                var pageEnd = P; /* print coordinates: page k always ends at k * P */
+                /* wkhtmltopdf never splits a table row: a row that crosses a page edge is
+                   moved to the next page, pushing everything after it down. 'shift' is that
+                   accumulated push, so print y = top(el) + shift. Spacers always end just
+                   before the page edge, so only the repeated header is moved (by 1-3 px)
+                   and every page starts exactly at k * P. */
+                var shift = 0;
+                function y(el) { return top(el) + shift; }
                 function spacer(beforeRow, h, cls) {
                     var tr = document.createElement('tr');
                     tr.className = cls;
@@ -129,28 +140,23 @@
                     td.style.height = h + 'px';
                     tr.appendChild(td);
                     body.insertBefore(tr, beforeRow);
+                    return tr;
                 }
-                var starts = [0]; /* document y where each printed page begins */
+                var starts = [0]; /* print y where each page begins */
                 function brk(beforeRow) {
-                    /* Keep the break deterministic and lightweight: one spacer row, then
-                       force the next page at the actual row boundary. This avoids adding
-                       extra inserted rows that can jitter the table mid-page in wkhtmltopdf. */
-                    var pad = Math.max(0, Math.floor(pageEnd - top(beforeRow)) - 8);
-                    if (pad > 0) {
-                        spacer(beforeRow, pad, 'sv-break');
-                    }
-                    beforeRow.style.pageBreakBefore = 'always';
-                    var start = top(beforeRow);
-                    starts.push(start);
-                    /* Repeat the full document header (logo, title, number, date) on every new page. */
-                    var src = page.querySelector('table.sv-head');
+                    /* Close the frame on this page with one spacer row that ends just before
+                       the page edge, then start the next page with the same top margin, the
+                       repeated document header and the goods header. */
+                    var pad = Math.max(0, Math.floor(pageEnd - y(beforeRow)) - 2);
+                    if (pad &gt; 0) { spacer(beforeRow, pad, 'sv-break'); }
+                    var first = spacer(beforeRow, Math.round(5 * mm), 'sv-rephead sv-pagetop');
+                    var src = page.querySelector('.sv-page &gt; table.sv-head');
                     if (src) {
                         var hr = document.createElement('tr');
                         hr.className = 'sv-rephead sv-rephead-box';
                         var hc = document.createElement('td');
                         hc.colSpan = ncol;
                         hc.style.padding = '0';
-                        hc.style.border = '0';
                         hc.appendChild(src.cloneNode(true));
                         hr.appendChild(hc);
                         body.insertBefore(hr, beforeRow);
@@ -158,7 +164,10 @@
                     var h = head.cloneNode(true);
                     h.className += ' sv-rephead';
                     body.insertBefore(h, beforeRow);
-                    pageEnd = start + P;
+                    first.style.pageBreakBefore = 'always';
+                    shift += pageEnd - y(first); /* the first row of the page is moved to the page edge */
+                    starts.push(pageEnd);
+                    pageEnd += P;
                 }
                 var rows = [];
                 for (var r = 0; r &lt; body.rows.length; r++) {
@@ -166,19 +175,20 @@
                 }
                 for (var k = 0; k &lt; rows.length; k++) {
                     var row = rows[k];
-                    if (top(row) + row.offsetHeight &gt; pageEnd - B) { brk(row); }
+                    if (y(row) + row.offsetHeight &gt; pageEnd - B) { brk(row); }
                 }
                 var fh = foot.offsetHeight;
-                if (top(filler) + fh &gt; pageEnd - B) {
+                if (y(filler) + fh &gt; pageEnd - B) {
                     /* Footer does not fit: close this page's table, continue on the next page. */
-                    filler.style.height = Math.max(0, pageEnd - B - top(filler)) + 'px';
+                    filler.style.height = Math.max(0, Math.floor(pageEnd - B - y(filler))) + 'px';
                     var nf = filler.cloneNode(true);
                     nf.className = 'sv-fill sv-fill-extra';
+                    nf.style.height = '0px';
                     body.appendChild(nf);
                     brk(nf);
                     filler = nf;
                 }
-                filler.style.height = Math.max(0, pageEnd - B - fh - top(filler)) + 'px';
+                filler.style.height = Math.max(0, Math.floor(pageEnd - B - fh - y(filler))) + 'px';
                 var total = starts.length;
                 for (var n = 0; n &lt; total; n++) {
                     var d = document.createElement('div');
@@ -187,7 +197,7 @@
                     d.innerHTML = 'Page ' + (n + 1) + ' / ' + total;
                     page.appendChild(d);
                 }
-                page.style.height = Math.floor(pageEnd - off - 12) + 'px';
+                page.style.height = Math.floor(pageEnd - shift - off - 12) + 'px';
             }
             /* Web fonts can apply after 'load'; re-run until wkhtmltopdf prints
                (Odoo passes javascript-delay 1000 ms). */
@@ -219,7 +229,7 @@
             <t t-call="solven_export_invoice.solven_ship_pay"/>
 
             <table class="sv-box sv-goods">
-                <colgroup><col style="width:100mm"/><col style="width:29mm"/><col style="width:29mm"/><col style="width:42mm"/></colgroup>
+                <colgroup><col style="width:377px"/><col style="width:110px"/><col style="width:110px"/><col style="width:157px"/></colgroup>
                 <thead><tr class="sv-strip"><td>DESCRIPTION OF GOODS</td><td class="num">QUANTITY</td><td class="num">UNIT PRICE</td><td class="num">TOTAL</td></tr></thead>
                 <tbody>
                     <t t-foreach="lines" t-as="line">
