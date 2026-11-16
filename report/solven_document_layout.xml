@@ -252,6 +252,12 @@
                 </tbody>
             </table>
 
+            <t t-set="doc_notes" t-value="doc._solven_document_notes()"/>
+            <table t-if="doc_notes" class="sv-box sv-note">
+                <tr class="sv-strip"><td>NOTE</td></tr>
+                <tr><td class="sv-terms"><t t-foreach="doc_notes" t-as="n"><div style="white-space:pre-line" t-out="n"/></t></td></tr>
+            </table>
+
             <div class="sv-foot">
                 <table class="sv-box sv-totals">
                     <colgroup><col style="width:100mm"/><col style="width:100mm"/></colgroup>

@@ -233,6 +233,16 @@ class SolvenExportMixin(models.AbstractModel):
             return terms
         return False
 
+    def _solven_document_notes(self):
+        """Manual notes printed in a separate NOTE box below the goods table.
+
+        Never merged into product descriptions."""
+        self.ensure_one()
+        lines = self.order_line if self._name == "sale.order" else self.invoice_line_ids
+        notes = [(line.name or "").strip() for line in lines.sorted(lambda l: (l.sequence, l.id))
+                 if line.display_type == "line_note" and (line.name or "").strip()]
+        return notes
+
     def _solven_line_notes(self):
         self.ensure_one()
         lines = self.order_line if self._name == "sale.order" else self.invoice_line_ids
@@ -276,7 +286,6 @@ class SolvenExportMixin(models.AbstractModel):
                 parts.append(line.solven_packaging_custom.strip())
         if line.discount:
             parts.append(f"Discount: {self._solven_fmt_qty(line.discount)}%")
-        parts.extend((notes or {}).get(line.id, []))
         return " - ".join(dict.fromkeys(part for part in parts if part))
 
     def _solven_payment_term(self):

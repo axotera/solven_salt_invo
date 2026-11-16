@@ -261,3 +261,7 @@ class TestSolvenDocuments(TransactionCase):
         html = self._render("solven_export_invoice.report_commercial_invoice", move)
         for text in ("25 kg PP Bags", "Big blue bags", "Shipment within 2 weeks"):
             self.assertIn(text, html)
+        # Manual Note prints in its own NOTE box, never inside a product description.
+        self.assertIn("sv-note", html)
+        self.assertNotIn("Big blue bags - Shipment within 2 weeks", html)
+        self.assertEqual(move._solven_document_notes(), ["Shipment within 2 weeks"])
